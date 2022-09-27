@@ -1,4 +1,4 @@
-# ESP32 Jakiper MQTT Publisher
+# ESP32 PylonTech MQTT Publisher
 
 <p align="center">
 <img src=https://github.com/graham22/ClassicMQTT/blob/master/pictures/ESP32-pinout-mapping.png width=500>
