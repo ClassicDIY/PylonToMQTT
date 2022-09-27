@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"path": "PylonToMQTT"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"array": "cpp",
+			"string": "cpp",
+			"string_view": "cpp",
+			"cstddef": "cpp"
+		}
+	}
+}
