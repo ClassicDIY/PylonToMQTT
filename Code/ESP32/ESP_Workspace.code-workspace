@@ -9,7 +9,29 @@
 			"array": "cpp",
 			"string": "cpp",
 			"string_view": "cpp",
-			"cstddef": "cpp"
+			"cstddef": "cpp",
+			"atomic": "cpp",
+			"*.tcc": "cpp",
+			"bitset": "cpp",
+			"chrono": "cpp",
+			"deque": "cpp",
+			"list": "cpp",
+			"unordered_map": "cpp",
+			"unordered_set": "cpp",
+			"vector": "cpp",
+			"iterator": "cpp",
+			"memory_resource": "cpp",
+			"optional": "cpp",
+			"fstream": "cpp",
+			"istream": "cpp",
+			"ostream": "cpp",
+			"sstream": "cpp",
+			"streambuf": "cpp",
+			"system_error": "cpp",
+			"thread": "cpp",
+			"functional": "cpp",
+			"regex": "cpp",
+			"tuple": "cpp"
 		}
 	}
 }

@@ -66,7 +66,6 @@ int _publishCount = 0;
 bool _clientsConfigured = false;
 bool _mqttReadingsAvailable = false;
 int _currentBank = 0;
-JakiperInfo _jakiperInfo;
 
 void IRAM_ATTR resetModule()
 {
@@ -103,53 +102,6 @@ void publish(const char *subtopic, const char *value, boolean retained = false)
 		_mqttClient.publish(buf, 0, retained, value);
 	}
 }
-
-// note, add 0.01 as a work around for Android JSON deserialization bug with float
-void publishReadings()
-{
-	StaticJsonDocument<1024> root;
-	root.clear();
-	root["BatCurrent"] = _jakiperInfo.BatCurrent;
-	root["BatVoltage"] = _jakiperInfo.BatVoltage;
-	root["SOC"] = _jakiperInfo.SOC;
-	root["SOH"] = _jakiperInfo.SOH;
-	root["RemainingCapacity"] = _jakiperInfo.RemainingCapacity;
-	root["FullCapacity"] = _jakiperInfo.FullCapacity;
-	root["CycleCount"] = _jakiperInfo.CycleCount;
-	root["Cell1"] = _jakiperInfo.Cell1;
-	root["Cell2"] = _jakiperInfo.Cell2;
-	root["Cell3"] = _jakiperInfo.Cell3;
-	root["Cell4"] = _jakiperInfo.Cell4;
-	root["Cell5"] = _jakiperInfo.Cell5;
-	root["Cell6"] = _jakiperInfo.Cell6;
-	root["Cell7"] = _jakiperInfo.Cell7;
-	root["Cell8"] = _jakiperInfo.Cell8;
-	root["Cell9"] = _jakiperInfo.Cell9;
-	root["Cell10"] = _jakiperInfo.Cell10;
-	root["Cell11"] = _jakiperInfo.Cell11;
-	root["Cell12"] = _jakiperInfo.Cell12;
-	root["Cell13"] = _jakiperInfo.Cell13;
-	root["Cell14"] = _jakiperInfo.Cell14;
-	root["Cell15"] = _jakiperInfo.Cell15;
-	root["Cell16"] = _jakiperInfo.Cell16;
-	root["Cell1Temp"] = _jakiperInfo.Cell1Temp;
-	root["Cell2Temp"] = _jakiperInfo.Cell2Temp;
-	root["Cell3Temp"] = _jakiperInfo.Cell3Temp;
-	root["Cell4Temp"] = _jakiperInfo.Cell4Temp;
-	root["MosTemp"] = _jakiperInfo.MosTemp;
-	root["EnvTemp"] = _jakiperInfo.EnvTemp;	
-	String s;
-	serializeJson(root, s);
-	publish("readings", s.c_str());
-	_publishCount++;
-}
-
-// uint16_t Getuint16Value(int index, const uint8_t *data)
-// {
-// 	index *= 2;
-// 	return (data[index] << 8 | data[index + 1]);
-// }
-
 
 void Wake()
 {
@@ -378,13 +330,14 @@ void send_cmd(uint8_t address, uint8_t cmd, const char* info = "") {
 }
 
 
-int parseValue(char * p, int o, int l){
+int parseValue(char** pp,int l){
 	char* buf = (char *)malloc(l+1);
+	char* p = *pp;
 	for (int i =0; i < l; i++) {
-		buf[i] = p[o++];
+		buf[i] = **pp;
+		*pp += 1;
 	}
 	buf[l] = 0;
-	loge("len: %d buf: %s", l, buf);
 	int number = (int)strtol(buf, NULL, 16);
 	free(buf);
 	return number;
@@ -396,7 +349,8 @@ int readFromSerial()
 	bool foundTerminator = true;
 	while(Serial2.available())
 	{
-		char szResponse[4096] = "";
+		
+		char szResponse[1024] = "";
 		const int readNow = Serial2.readBytesUntil(0x0d, szResponse, sizeof(szResponse)-1); 
 		if(readNow > 0 && szResponse[0] != '\0')
 		{
@@ -407,53 +361,68 @@ int readFromSerial()
 			// for (int i = 0; i < readNow; i++) {
     		// 	Serial.printf("%c ", szResponse[i]);
 			// }
-			logd("received: %d", readNow);
+			// Serial.println("");
+			// logd("received: %d", readNow);
 			szResponse[readNow] = 0;
 			logd("data: %s", szResponse);
-
+			
 			if (szResponse[0] == '~')
 			{
-				uint16_t v = parseValue(szResponse, 1, 2);
-				uint16_t device = parseValue(szResponse, 3, 2);
-				uint16_t CID1 = parseValue(szResponse, 5, 2);
-				uint16_t CID2 = parseValue(szResponse, 7, 2);
-				_jakiperInfo.Cell1 = parseValue(szResponse, 19, 4)/1000.0;
-				_jakiperInfo.Cell2 = parseValue(szResponse, 23, 4)/1000.0;
-				_jakiperInfo.Cell3 = parseValue(szResponse, 27, 4)/1000.0;
-				_jakiperInfo.Cell4 = parseValue(szResponse, 31, 4)/1000.0;
-				_jakiperInfo.Cell5 = parseValue(szResponse, 35, 4)/1000.0;
-				_jakiperInfo.Cell6 = parseValue(szResponse, 39, 4)/1000.0;
-				_jakiperInfo.Cell7 = parseValue(szResponse, 43, 4)/1000.0;
-				_jakiperInfo.Cell8 = parseValue(szResponse, 47, 4)/1000.0;
-				_jakiperInfo.Cell9 = parseValue(szResponse, 51, 4)/1000.0;
-				_jakiperInfo.Cell10 = parseValue(szResponse, 55, 4)/1000.0;
-				_jakiperInfo.Cell11 = parseValue(szResponse, 59, 4)/1000.0;
-				_jakiperInfo.Cell12 = parseValue(szResponse, 63, 4)/1000.0;
-				_jakiperInfo.Cell13 = parseValue(szResponse, 67, 4)/1000.0;
-				_jakiperInfo.Cell14 = parseValue(szResponse, 71, 4)/1000.0;
-				_jakiperInfo.Cell15 = parseValue(szResponse, 75, 4)/1000.0;
-				_jakiperInfo.Cell16 = parseValue(szResponse, 79, 4)/1000.0;
+				uint16_t CHKSUM = 0;
+			
+				char* ptr = &szResponse[1]; // skip SOI (~)
+				char ** pp = & ptr;
+				uint16_t VER = parseValue(pp, 2);
+				uint16_t ADR = parseValue(pp, 2);
+				uint16_t CID1 = parseValue(pp, 2);
+				uint16_t CID2 = parseValue(pp, 2);
+				uint16_t LENGTH = parseValue(pp, 4);
+				uint16_t LCHKSUM = LENGTH & 0xF000;
+				uint16_t LENID = LENGTH & 0x0FFF;
+				LENGTH = LENID - 4; // subsctract LENID & CHKSUM
+				uint16_t INFO = parseValue(pp,4);
+				uint16_t numberOfModules = INFO & 0x00FF;
+				char* startOfModuleData = ptr;
+				StaticJsonDocument<2048> root;
+				root.clear();
+				JsonArray modules = root.createNestedArray("Modules");
+				logd("numberOfModules: %d", numberOfModules);
+				while (numberOfModules-- != 0) {
+					JsonObject module = modules.createNestedObject();
+					char key[16];
+					uint16_t CELLS = parseValue(pp, 2);
+					for (int i = 0; i < CELLS; i++) {
+						sprintf(key, "Cell%d", i+1);
+						module[key] = parseValue(pp, 4)/1000.0;
+					}
+					uint16_t TEMPS = parseValue(pp,2);
+					for (int i = 0; i < (TEMPS); i++) {
 
-				// _jakiperInfo.CycleCount = parseValue(szResponse, 119, 4);
-				// _jakiperInfo.RemainingCapacity = parseValue(szResponse, 123, 6)/1000.0;
-				// _jakiperInfo.BatVoltage = parseValue(szResponse, 105, 4)/1000.0;
-				// _jakiperInfo.FullCapacity = parseValue(szResponse, 129, 6)/1000.0;
-				
-				
-				// _jakiperInfo.EnvTemp = parseValue(szResponse, 81, 4)/100.0;
-				// _jakiperInfo.Cell1Temp = parseValue(szResponse, 85, 4)/100.0;
-				// _jakiperInfo.Cell2Temp = parseValue(szResponse, 89, 4)/100.0;
-				// _jakiperInfo.Cell3Temp = parseValue(szResponse, 93, 4)/100.0;
-				// _jakiperInfo.Cell4Temp = parseValue(szResponse, 97, 4)/100.0;
+						sprintf(key, "Temp%d", i+1);
+						modules[key] = parseValue(pp,4)/100.0;
+					}
+					module["BatCurrent"] = (parseValue(pp, 4)/1000.0);
+					module["BatVoltage"] = (parseValue(pp, 4)/1000.0);;
+					module["RemainingCapacity"] = (parseValue(pp,4)/1000.0);	
+					ptr += 6; // skip to cycle number
+					module["CycleCount"] = parseValue(pp, 4);
+				}
+				int moduleDataLength = ptr - startOfModuleData; // calculate length of odule data
+				logd("moduleDataLength: %d", moduleDataLength);
+				for (int i = 0; i < 16; i++) {
+					Serial.printf("%c ", ptr[i]);
+				}
+				Serial.println("");
+				int remain = parseValue(pp, 6);
+				int total = parseValue(pp, 6);
+				root["SOC"] = (remain * 100) / total;
+				String s;
+				serializeJson(root, s);
+				publish("readings", s.c_str());
+				_publishCount++;
+				logd("VER: %02X, ADR: %02X, CID1: %02X, CID2: %02X, LENID: %02X (%d), LENGTH %d, Modules: %d, ModuleDataLength: %d, CHKSUM: %02X", VER, ADR, CID1, CID2, LENID, LENID, LENGTH, numberOfModules, moduleDataLength, CHKSUM);
 
-				// _jakiperInfo.BatCurrent = parseValue(szResponse, 102, 3)/1000.0;
-				// int total = parseValue(szResponse, 129, 6);
-				// int remain = parseValue(szResponse, 123, 6);
-				// _jakiperInfo.SOC = (remain/total) * 100;
-				logd("version: %d, device: %d, CID1: %d, CID2: %d", v, device, CID1, CID2);
-				publishReadings();
 			}
-
 		}
 	}
 	if(recvBuffLen > 0 )
@@ -573,9 +542,9 @@ void loop()
 				_lastPublishTimeStamp = millis() + _currentPublishRate;
 				
 				if (readFromSerial() == 0) {
-					char bdevid[4];
-					sprintf(bdevid, "%02X", 1);
-					send_cmd(1, 0x42, bdevid);
+					// char bdevid[4];
+					// sprintf(bdevid, "%02X", 1);
+					// send_cmd(1, 0x42, bdevid);
 				};
 			}
 			if (!_stayAwake && _publishCount >= WAKE_COUNT)
