@@ -64,8 +64,7 @@ boolean _stayAwake = true;
 int _publishCount = 0;
 
 bool _clientsConfigured = false;
-bool _mqttReadingsAvailable = false;
-int _currentBank = 0;
+Command _currentCommand = Command::None;
 
 void IRAM_ATTR resetModule()
 {
@@ -320,7 +319,8 @@ void encode_cmd(char* frame, uint8_t address, uint8_t cid2, const char* info) {
 	return;
 }
 
-void send_cmd(uint8_t address, uint8_t cmd, const char* info = "") {
+void send_cmd(uint8_t address, Command cmd, const char* info = "") {
+	_currentCommand = cmd;
 	char raw_frame[64];
 	memset(raw_frame, 0, 64);
 	encode_cmd(raw_frame, address, cmd, info);
@@ -330,9 +330,18 @@ void send_cmd(uint8_t address, uint8_t cmd, const char* info = "") {
 }
 
 
-int parseValue(char** pp,int l){
+String convert_ASCII(char* p){
+   String ascii = "";
+   String hex = p;
+   for (size_t i = 0; i < strlen(p); i += 2){
+      String part = hex.substring(i, 2);
+      ascii += strtol(part.c_str(), nullptr, 16);
+   }
+   return ascii;
+}
+
+int parseValue(char** pp, int l){
 	char* buf = (char *)malloc(l+1);
-	char* p = *pp;
 	for (int i =0; i < l; i++) {
 		buf[i] = **pp;
 		*pp += 1;
@@ -343,85 +352,104 @@ int parseValue(char** pp,int l){
 	return number;
 }
 
-int readFromSerial()
+int readFromSerial(Command cmd)
 {
 	int recvBuffLen = 0;
 	bool foundTerminator = true;
-	while(Serial2.available())
+	char szResponse[1024] = "";
+	const int readNow = Serial2.readBytesUntil(0x0d, szResponse, sizeof(szResponse)-1); 
+	if(readNow > 0 && szResponse[0] != '\0')
 	{
-		
-		char szResponse[1024] = "";
-		const int readNow = Serial2.readBytesUntil(0x0d, szResponse, sizeof(szResponse)-1); 
-		if(readNow > 0 && szResponse[0] != '\0')
+		logd("received: %d", readNow);
+		szResponse[readNow] = 0;
+		logd("data: %s", szResponse);
+		if (szResponse[0] == '~')
 		{
-			// for (int i = 0; i < readNow; i++) {
-    		// 	Serial.printf("%02X ", szResponse[i]);
-			// }
-			// Serial.println("");
-			// for (int i = 0; i < readNow; i++) {
-    		// 	Serial.printf("%c ", szResponse[i]);
-			// }
-			// Serial.println("");
-			// logd("received: %d", readNow);
-			szResponse[readNow] = 0;
-			logd("data: %s", szResponse);
-			
-			if (szResponse[0] == '~')
-			{
-				uint16_t CHKSUM = 0;
-			
-				char* ptr = &szResponse[1]; // skip SOI (~)
-				char ** pp = & ptr;
-				uint16_t VER = parseValue(pp, 2);
-				uint16_t ADR = parseValue(pp, 2);
-				uint16_t CID1 = parseValue(pp, 2);
-				uint16_t CID2 = parseValue(pp, 2);
-				uint16_t LENGTH = parseValue(pp, 4);
-				uint16_t LCHKSUM = LENGTH & 0xF000;
-				uint16_t LENID = LENGTH & 0x0FFF;
-				LENGTH = LENID - 4; // subsctract LENID & CHKSUM
-				uint16_t INFO = parseValue(pp,4);
-				uint16_t numberOfModules = INFO & 0x00FF;
-				char* startOfModuleData = ptr;
-				StaticJsonDocument<2048> root;
-				root.clear();
-				JsonArray modules = root.createNestedArray("Modules");
-				logd("numberOfModules: %d", numberOfModules);
-				while (numberOfModules-- != 0) {
-					JsonObject module = modules.createNestedObject();
-					char key[16];
-					uint16_t CELLS = parseValue(pp, 2);
-					for (int i = 0; i < CELLS; i++) {
-						sprintf(key, "Cell%d", i+1);
-						module[key] = parseValue(pp, 4)/1000.0;
-					}
-					uint16_t TEMPS = parseValue(pp,2);
-					for (int i = 0; i < (TEMPS); i++) {
+			char* eptr = &szResponse[readNow-4];
+			char ** pp = & eptr;
+			uint16_t CHKSUM = parseValue(pp, 4);
+			uint16_t sum = 0;
+			for (int i = 1; i < readNow-4; i++) {
+				sum += szResponse[i];
+			}
+			if (((CHKSUM+sum) & 0xFFFF) != 0) { 
+				loge("Checksum failed %04x", sum); 
+				return -1;
+			} 
+				else { 
+					logi("Checksum passed"); 
+			}
+			char* ptr = &szResponse[1]; // skip SOI (~)
+			pp = & ptr;
+			uint16_t VER = parseValue(pp, 2);
+			uint16_t ADR = parseValue(pp, 2);
+			uint16_t CID1 = parseValue(pp, 2);
+			uint16_t CID2 = parseValue(pp, 2);
+			uint16_t LENGTH = parseValue(pp, 4);
+			uint16_t LCHKSUM = LENGTH & 0xF000;
+			uint16_t LENID = LENGTH & 0x0FFF;
+			if (readNow < (LENID + 17)) {  
+				loge("Data length error LENID: %d, Received: %d", LENID, (readNow-17));
+				return -1;
+			}
+			for (int i = 0; i < LENID; i++) {
+				Serial.printf("%c", ptr[i]);
+			}
+			Serial.println("");
+			StaticJsonDocument<2048> root;
+			String s;
+			switch (cmd) {
+				case Command::GetAnalog:
+				{
+					uint16_t INFO = parseValue(pp,4);
+					logd("VER: %02X, ADR: %02X, CID1: %02X, CID2: %02X, LENID: %02X (%d), INFO: %04X CHKSUM: %02X, heap: %d", VER, ADR, CID1, CID2, LENID, LENID, INFO, CHKSUM, esp_get_free_heap_size());
 
-						sprintf(key, "Temp%d", i+1);
-						modules[key] = parseValue(pp,4)/100.0;
+					if (CID2 != ResponseCode::Normal) {
+						loge("CID2 error code: %02X", CID2);
+						return -1;
 					}
-					module["BatCurrent"] = (parseValue(pp, 4)/1000.0);
-					module["BatVoltage"] = (parseValue(pp, 4)/1000.0);;
-					module["RemainingCapacity"] = (parseValue(pp,4)/1000.0);	
-					ptr += 6; // skip to cycle number
-					module["CycleCount"] = parseValue(pp, 4);
-				}
-				int moduleDataLength = ptr - startOfModuleData; // calculate length of odule data
-				logd("moduleDataLength: %d", moduleDataLength);
-				for (int i = 0; i < 16; i++) {
-					Serial.printf("%c ", ptr[i]);
-				}
-				Serial.println("");
-				int remain = parseValue(pp, 6);
-				int total = parseValue(pp, 6);
-				root["SOC"] = (remain * 100) / total;
-				String s;
-				serializeJson(root, s);
-				publish("readings", s.c_str());
-				_publishCount++;
-				logd("VER: %02X, ADR: %02X, CID1: %02X, CID2: %02X, LENID: %02X (%d), LENGTH %d, Modules: %d, ModuleDataLength: %d, CHKSUM: %02X", VER, ADR, CID1, CID2, LENID, LENID, LENGTH, numberOfModules, moduleDataLength, CHKSUM);
+					
+					root.clear();
+					uint16_t numberOfModules = INFO & 0x00FF;
+					logd("numberOfModules: %d", numberOfModules);
+					char* startOfModuleData = ptr;
+					JsonArray modules = root.createNestedArray("Modules");
+					while (numberOfModules-- != 0) {
+						JsonObject module = modules.createNestedObject();
+						char key[16];
+						uint16_t CELLS = parseValue(pp, 2);
+						for (int i = 0; i < CELLS; i++) {
+							sprintf(key, "Cell%d", i+1);
+							module[key] = parseValue(pp, 4)/1000.0;
+						}
+						uint16_t TEMPS = parseValue(pp,2);
+						for (int i = 0; i < (TEMPS); i++) {
 
+							sprintf(key, "Temp%d", i+1);
+							modules[key] = parseValue(pp,4)/100.0;
+						}
+						module["BatCurrent"] = (parseValue(pp, 4)/1000.0);
+						module["BatVoltage"] = (parseValue(pp, 4)/1000.0);;
+						module["RemainingCapacity"] = (parseValue(pp,4)/1000.0);	
+						ptr += 6; // skip to cycle number
+						module["CycleCount"] = parseValue(pp, 4);
+					}
+					int moduleDataLength = ptr - startOfModuleData; // calculate length of module data
+					logd("moduleDataLength: %d", moduleDataLength);
+					ptr = &szResponse[readNow-16]; // grab the remain and total
+					int remain = parseValue(pp, 6);
+					int total = parseValue(pp, 6);
+					root["SOC"] = (remain * 100) / total;
+					
+					serializeJson(root, s);
+					publish("readings", s.c_str());
+					_publishCount++;
+				}
+				break;
+				case Command::GetVersionInfo:
+					String ascii = convert_ASCII(ptr);
+					logi("Version Info %s", ascii.c_str());
+				break;
 			}
 		}
 	}
@@ -430,6 +458,7 @@ int readFromSerial()
 		if(foundTerminator == false)
 		{
 			loge("Failed to find pylon> terminator");
+			return -1;
 		}
 	}
 	return recvBuffLen;
@@ -540,12 +569,23 @@ void loop()
 			if (_lastPublishTimeStamp < millis())
 			{
 				_lastPublishTimeStamp = millis() + _currentPublishRate;
-				
-				if (readFromSerial() == 0) {
-					// char bdevid[4];
-					// sprintf(bdevid, "%02X", 1);
-					// send_cmd(1, 0x42, bdevid);
-				};
+				feed_watchdog();
+
+				if (_currentCommand == Command::None) {
+					if (!Serial2.available()) {
+						char bdevid[4];
+						sprintf(bdevid, "%02X", 1);
+						send_cmd(1, Command::GetVersionInfo, bdevid);
+					}
+				}
+				else {
+					if (Serial2.available()) {
+						if (readFromSerial(_currentCommand) == 0) {
+							_currentCommand = Command::None;
+							logi("processed command!");
+						};
+					}
+				}
 			}
 			if (!_stayAwake && _publishCount >= WAKE_COUNT)
 			{

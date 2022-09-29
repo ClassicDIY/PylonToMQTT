@@ -35,3 +35,25 @@ struct JakiperInfo
     float EnvTemp = 0;
 
 };
+enum Command 
+{
+    None = 0x00,
+    GetVersionInfo = 0xc1,
+    GetBarCode = 0xc2,
+    GetPackCount = 0x90,
+    GetAnalog = 0x42,
+    GetAlarm = 0x44
+};
+
+enum ResponseCode 
+{
+    Normal = 0x00,
+    VER_error = 0x01,
+    CHKSUM_error = 0x02,
+    LCHKSUM_error = 0x03,
+	CID2invalid = 0x04,
+    CommandFormat_error = 0x05,
+	InvalidData = 0x06,
+    ADR_error = 0x90,
+    CID2Communicationinvalid_error = 0x91
+};

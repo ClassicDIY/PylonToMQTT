@@ -11,3 +11,5 @@ typedef struct
 	int numberOfRegisters;
 	std::function<void(ModbusMessage data)> func;
 } ModbusRegisterBank;
+
+
