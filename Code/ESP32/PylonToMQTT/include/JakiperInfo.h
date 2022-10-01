@@ -35,14 +35,21 @@ struct JakiperInfo
     float EnvTemp = 0;
 
 };
-enum Command 
+
+enum CommandInformation : byte
 {
     None = 0x00,
+    AnalogValueFixedPoint = 0x42,
+    AlarmInfo = 0x44,
+    SystemParameterFixedPoint = 0x47,
+    ProtocolVersion = 0x4f,
+    ManufacturerInfo = 0x51,
+    GetChargeDischargeManagementInfo = 0x92,
+    Serialnumber = 0x93,
+    FirmwareInfo = 0x96,
     GetVersionInfo = 0xc1,
     GetBarCode = 0xc2,
     GetPackCount = 0x90,
-    GetAnalog = 0x42,
-    GetAlarm = 0x44
 };
 
 enum ResponseCode 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "esp_log.h"
-#define TAG "JAKIPERMQTT"
+#define TAG "PylonToMQTT"
 
 void inline printHexString(char* ptr, int len)
 {

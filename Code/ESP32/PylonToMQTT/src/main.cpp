@@ -64,7 +64,7 @@ boolean _stayAwake = true;
 int _publishCount = 0;
 
 bool _clientsConfigured = false;
-Command _currentCommand = Command::None;
+CommandInformation _currentCommand = CommandInformation::None;
 
 void IRAM_ATTR resetModule()
 {
@@ -319,13 +319,12 @@ void encode_cmd(char* frame, uint8_t address, uint8_t cid2, const char* info) {
 	return;
 }
 
-void send_cmd(uint8_t address, Command cmd, const char* info = "") {
+void send_cmd(uint8_t address, CommandInformation cmd, const char* info = "") {
 	_currentCommand = cmd;
 	char raw_frame[64];
 	memset(raw_frame, 0, 64);
 	encode_cmd(raw_frame, address, cmd, info);
 	loge("send_cmd: %s", raw_frame);
-	printHexString(raw_frame, strlen(raw_frame));
 	Serial2.write(raw_frame);
 }
 
@@ -352,7 +351,7 @@ int parseValue(char** pp, int l){
 	return number;
 }
 
-int readFromSerial(Command cmd)
+int readFromSerial(CommandInformation cmd)
 {
 	int recvBuffLen = 0;
 	bool foundTerminator = true;
@@ -373,7 +372,8 @@ int readFromSerial(Command cmd)
 				sum += szResponse[i];
 			}
 			if (((CHKSUM+sum) & 0xFFFF) != 0) { 
-				loge("Checksum failed %04x", sum); 
+				uint16_t c = ~sum + 1;
+				loge("Checksum failed: %04x, should be: %04X", sum, c); 
 				return -1;
 			} 
 				else { 
@@ -392,23 +392,24 @@ int readFromSerial(Command cmd)
 				loge("Data length error LENID: %d, Received: %d", LENID, (readNow-17));
 				return -1;
 			}
-			for (int i = 0; i < LENID; i++) {
-				Serial.printf("%c", ptr[i]);
+			if (LENID > 0) {
+				String hex = ptr;
+				String part = hex.substring(0,LENID);
+				logd("INFO: %s", part);
 			}
-			Serial.println("");
+			logd("VER: %02X, ADR: %02X, CID1: %02X, CID2: %02X, LENID: %02X (%d), CHKSUM: %02X, heap: %d", VER, ADR, CID1, CID2, LENID, LENID, CHKSUM, esp_get_free_heap_size());
+			if (CID2 != ResponseCode::Normal) {
+				loge("CID2 error code: %02X", CID2);
+				return -1;
+			}
 			StaticJsonDocument<2048> root;
 			String s;
 			switch (cmd) {
-				case Command::GetAnalog:
+				case CommandInformation::AnalogValueFixedPoint:
 				{
 					uint16_t INFO = parseValue(pp,4);
-					logd("VER: %02X, ADR: %02X, CID1: %02X, CID2: %02X, LENID: %02X (%d), INFO: %04X CHKSUM: %02X, heap: %d", VER, ADR, CID1, CID2, LENID, LENID, INFO, CHKSUM, esp_get_free_heap_size());
+					logd("CommandInformation::AnalogValueFixedPoint: INFO: %04X", INFO);
 
-					if (CID2 != ResponseCode::Normal) {
-						loge("CID2 error code: %02X", CID2);
-						return -1;
-					}
-					
 					root.clear();
 					uint16_t numberOfModules = INFO & 0x00FF;
 					logd("numberOfModules: %d", numberOfModules);
@@ -446,9 +447,17 @@ int readFromSerial(Command cmd)
 					_publishCount++;
 				}
 				break;
-				case Command::GetVersionInfo:
-					String ascii = convert_ASCII(ptr);
-					logi("Version Info %s", ascii.c_str());
+				case CommandInformation::GetVersionInfo:
+					logi("GetVersionInfo");
+				break;
+				case CommandInformation::AlarmInfo:
+					logi("GetAlarm");
+				break;
+				case CommandInformation::GetBarCode:
+					logi("GetBarCode");
+				break;
+				case CommandInformation::GetPackCount:
+					logi("GetPackCount");
 				break;
 			}
 		}
@@ -571,17 +580,17 @@ void loop()
 				_lastPublishTimeStamp = millis() + _currentPublishRate;
 				feed_watchdog();
 
-				if (_currentCommand == Command::None) {
+				if (_currentCommand == CommandInformation::None) {
 					if (!Serial2.available()) {
 						char bdevid[4];
 						sprintf(bdevid, "%02X", 1);
-						send_cmd(1, Command::GetVersionInfo, bdevid);
+						send_cmd(1, CommandInformation::GetVersionInfo, bdevid);
 					}
 				}
 				else {
 					if (Serial2.available()) {
 						if (readFromSerial(_currentCommand) == 0) {
-							_currentCommand = Command::None;
+							_currentCommand = CommandInformation::None;
 							logi("processed command!");
 						};
 					}
