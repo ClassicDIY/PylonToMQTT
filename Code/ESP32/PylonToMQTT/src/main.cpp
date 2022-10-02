@@ -7,7 +7,8 @@
 #include <ArduinoJson.h>
 #include "AsyncMqttClient.h"
 #include "Log.h"
-#include "JakiperInfo.h"
+#include "Enumerations.h"
+#include "AsyncSerial.h"
 
 // Include Update server
 #ifdef ESP8266
@@ -18,7 +19,7 @@
 
 #define MAX_PUBLISH_RATE 30000
 #define MIN_PUBLISH_RATE 1000
-#define WAKE_PUBLISH_RATE 3000
+#define WAKE_PUBLISH_RATE 5000
 #define SNOOZE_PUBLISH_RATE 300000
 #define WAKE_COUNT 60
 #define CONFIG_VERSION "V1.0.1" // major.minor.build (major or minor will invalidate the configuration)
@@ -65,6 +66,25 @@ int _publishCount = 0;
 
 bool _clientsConfigured = false;
 CommandInformation _currentCommand = CommandInformation::None;
+
+int parseResponse(char *szResponse, size_t readNow, CommandInformation cmd);
+
+void complete(AsyncSerial& sender)
+{
+	parseResponse((char*)sender.GetContent(), sender.GetContentLength(), (CommandInformation)sender.GetToken());
+}
+
+void overflow(AsyncSerial& sender)
+{
+	loge("  Response from AsyncSerial: overflow");
+}
+
+void timeout(AsyncSerial& sender)
+{
+	loge("  Response from AsyncSerial: timeout");
+}
+
+AsyncSerial _asyncSerial(complete, timeout, overflow);
 
 void IRAM_ATTR resetModule()
 {
@@ -351,138 +371,130 @@ int parseValue(char** pp, int l){
 	return number;
 }
 
-int readFromSerial(CommandInformation cmd)
+int parseResponse(char *szResponse, size_t readNow, CommandInformation cmd)
 {
-	int recvBuffLen = 0;
-	bool foundTerminator = true;
-	char szResponse[1024] = "";
-	const int readNow = Serial2.readBytesUntil(0x0d, szResponse, sizeof(szResponse)-1); 
 	if(readNow > 0 && szResponse[0] != '\0')
 	{
 		logd("received: %d", readNow);
-		szResponse[readNow] = 0;
 		logd("data: %s", szResponse);
-		if (szResponse[0] == '~')
-		{
-			char* eptr = &szResponse[readNow-4];
-			char ** pp = & eptr;
-			uint16_t CHKSUM = parseValue(pp, 4);
-			uint16_t sum = 0;
-			for (int i = 1; i < readNow-4; i++) {
-				sum += szResponse[i];
-			}
-			if (((CHKSUM+sum) & 0xFFFF) != 0) { 
-				uint16_t c = ~sum + 1;
-				loge("Checksum failed: %04x, should be: %04X", sum, c); 
-				return -1;
-			} 
-				else { 
-					logi("Checksum passed"); 
-			}
-			char* ptr = &szResponse[1]; // skip SOI (~)
-			pp = & ptr;
-			uint16_t VER = parseValue(pp, 2);
-			uint16_t ADR = parseValue(pp, 2);
-			uint16_t CID1 = parseValue(pp, 2);
-			uint16_t CID2 = parseValue(pp, 2);
-			uint16_t LENGTH = parseValue(pp, 4);
-			uint16_t LCHKSUM = LENGTH & 0xF000;
-			uint16_t LENID = LENGTH & 0x0FFF;
-			if (readNow < (LENID + 17)) {  
-				loge("Data length error LENID: %d, Received: %d", LENID, (readNow-17));
-				return -1;
-			}
-			if (LENID > 0) {
-				String hex = ptr;
-				String part = hex.substring(0,LENID);
-				logd("INFO: %s", part);
-			}
-			logd("VER: %02X, ADR: %02X, CID1: %02X, CID2: %02X, LENID: %02X (%d), CHKSUM: %02X, heap: %d", VER, ADR, CID1, CID2, LENID, LENID, CHKSUM, esp_get_free_heap_size());
-			if (CID2 != ResponseCode::Normal) {
-				loge("CID2 error code: %02X", CID2);
-				return -1;
-			}
-			StaticJsonDocument<2048> root;
-			String s;
-			switch (cmd) {
-				case CommandInformation::AnalogValueFixedPoint:
-				{
-					uint16_t INFO = parseValue(pp,4);
-					logd("CommandInformation::AnalogValueFixedPoint: INFO: %04X", INFO);
 
-					root.clear();
-					uint16_t numberOfModules = INFO & 0x00FF;
-					logd("numberOfModules: %d", numberOfModules);
-					char* startOfModuleData = ptr;
-					JsonArray modules = root.createNestedArray("Modules");
-					while (numberOfModules-- != 0) {
-						JsonObject module = modules.createNestedObject();
-						char key[16];
-						uint16_t CELLS = parseValue(pp, 2);
-						for (int i = 0; i < CELLS; i++) {
-							sprintf(key, "Cell%d", i+1);
-							module[key] = parseValue(pp, 4)/1000.0;
-						}
-						uint16_t TEMPS = parseValue(pp,2);
-						for (int i = 0; i < (TEMPS); i++) {
-
-							sprintf(key, "Temp%d", i+1);
-							modules[key] = parseValue(pp,4)/100.0;
-						}
-						module["BatCurrent"] = (parseValue(pp, 4)/1000.0);
-						module["BatVoltage"] = (parseValue(pp, 4)/1000.0);;
-						module["RemainingCapacity"] = (parseValue(pp,4)/1000.0);	
-						ptr += 6; // skip to cycle number
-						module["CycleCount"] = parseValue(pp, 4);
-					}
-					int moduleDataLength = ptr - startOfModuleData; // calculate length of module data
-					logd("moduleDataLength: %d", moduleDataLength);
-					ptr = &szResponse[readNow-16]; // grab the remain and total
-					int remain = parseValue(pp, 6);
-					int total = parseValue(pp, 6);
-					root["SOC"] = (remain * 100) / total;
-					
-					serializeJson(root, s);
-					publish("readings", s.c_str());
-					_publishCount++;
-				}
-				break;
-				case CommandInformation::GetVersionInfo:
-					logi("GetVersionInfo");
-				break;
-				case CommandInformation::AlarmInfo:
-					logi("GetAlarm");
-				break;
-				case CommandInformation::GetBarCode:
-					logi("GetBarCode");
-				break;
-				case CommandInformation::GetPackCount:
-					logi("GetPackCount");
-				break;
-			}
+		char* eptr = &szResponse[readNow-4];
+		char ** pp = & eptr;
+		uint16_t CHKSUM = parseValue(pp, 4);
+		uint16_t sum = 0;
+		for (int i = 1; i < readNow-4; i++) {
+			sum += szResponse[i];
 		}
-	}
-	if(recvBuffLen > 0 )
-	{
-		if(foundTerminator == false)
-		{
-			loge("Failed to find pylon> terminator");
+		if (((CHKSUM+sum) & 0xFFFF) != 0) { 
+			uint16_t c = ~sum + 1;
+			loge("Checksum failed: %04x, should be: %04X", sum, c); 
+			// return -1;
+		} 
+			else { 
+				logi("Checksum passed"); 
+		}
+		char* ptr = &szResponse[1]; // skip SOI (~)
+		pp = & ptr;
+		uint16_t VER = parseValue(pp, 2);
+		uint16_t ADR = parseValue(pp, 2);
+		uint16_t CID1 = parseValue(pp, 2);
+		uint16_t CID2 = parseValue(pp, 2);
+		uint16_t LENGTH = parseValue(pp, 4);
+		uint16_t LCHKSUM = LENGTH & 0xF000;
+		uint16_t LENID = LENGTH & 0x0FFF;
+		char* infoPtr = ptr; // mark start on info
+		if (readNow < (LENID + 17)) {  
+			loge("Data length error LENID: %d, Received: %d", LENID, (readNow-17));
 			return -1;
 		}
+		if (LENID > 0) {
+			String hex = ptr;
+			String part = hex.substring(0,LENID);
+			logd("INFO: %s", part.c_str());
+		}
+		logd("VER: %02X, ADR: %02X, CID1: %02X, CID2: %02X, LENID: %02X (%d), CHKSUM: %02X, heap: %d", VER, ADR, CID1, CID2, LENID, LENID, CHKSUM, esp_get_free_heap_size());
+		if (CID2 != ResponseCode::Normal) {
+			loge("CID2 error code: %02X", CID2);
+			return -1;
+		}
+		StaticJsonDocument<2048> root;
+		String s;
+		switch (cmd) {
+			case CommandInformation::AnalogValueFixedPoint:
+			{
+				uint16_t INFO = parseValue(pp,4);
+				logd("CommandInformation::AnalogValueFixedPoint: INFO: %04X", INFO);
+
+				root.clear();
+				uint16_t packNumber = INFO & 0x00FF;
+				logd("packNumber: %d", packNumber);
+				char* startOfModuleData = ptr;
+				JsonArray modules = root.createNestedArray("Modules");
+				while ((ptr - infoPtr) < LENID) {
+					JsonObject module = modules.createNestedObject();
+					char key[16];
+					uint16_t CELLS = parseValue(pp, 2);
+					logd("CELLS: %d", CELLS);
+					for (int i = 0; i < CELLS; i++) {
+						sprintf(key, "Cell%d", i+1);
+						module[key] = parseValue(pp, 4)/1000.0;
+					}
+					uint16_t TEMPS = parseValue(pp,2);
+					logd("TEMPS: %d", TEMPS);
+					for (int i = 0; i < (TEMPS); i++) {
+
+						sprintf(key, "Temp%d", i+1);
+						modules[key] = parseValue(pp,4)/100.0;
+					}
+					module["BatCurrent"] = (parseValue(pp, 4)/1000.0);
+					module["BatVoltage"] = (parseValue(pp, 4)/1000.0);
+					int remain = parseValue(pp, 4);
+					logd("remain: %d", remain);
+					module["RemainingCapacity"] = (remain/100.0);	
+					ptr += 2; // skip 02 userdef
+					int total = parseValue(pp, 4);
+					logd("total: %d", total);
+					module["TotalCapacity"] = (total/100.0);
+					module["CycleCount"] = parseValue(pp, 4);
+					module["SOC"] = (remain * 100) / total;	
+					module["LAST"] = (parseValue(pp, 6));
+					logd("ptr: %d, infoPtr: %d", ptr, infoPtr);				
+				}
+				int moduleDataLength = ptr - startOfModuleData; // calculate length of module data
+				logd("moduleDataLength: %d", moduleDataLength);
+		
+				serializeJson(root, s);
+				publish("readings", s.c_str());
+				_publishCount++;
+			}
+			break;
+			case CommandInformation::GetVersionInfo:
+				logi("GetVersionInfo");
+			break;
+			case CommandInformation::AlarmInfo:
+				logi("GetAlarm");
+			break;
+			case CommandInformation::GetBarCode:
+				logi("GetBarCode");
+			break;
+			case CommandInformation::GetPackCount:
+			{
+				uint8_t num = parseValue(pp, LENID);
+				logi("GetPackCount: %d", num);
+			}
+			break;
+		}
+
 	}
-	return recvBuffLen;
+	return 0;
 }
 
 void setup()
 {
 	Serial.begin(115200);
-	while (!Serial)
-	{
-		; // wait for serial port to connect. Needed for native USB port only
-	}
-	// Set up Serial2 connected to Modbus RTU
-	Serial2.begin(BAUDRATE, SERIAL_8N1, RXPIN, TXPIN);
-	logd("Booting");
+	while (!Serial) {}
+	// Set up serial port used to communicate with battery
+	_asyncSerial.begin(BAUDRATE, SERIAL_8N1, RXPIN, TXPIN);
 	pinMode(FACTORY_RESET_PIN, INPUT_PULLUP);
 	_iotWebConf.setStatusPin(WIFI_STATUS_PIN);
 	_iotWebConf.setConfigPin(WIFI_AP_PIN);
@@ -575,26 +587,29 @@ void loop()
 	{
 		if (_mqttClient.connected())
 		{
+			_asyncSerial.Receive(WAKE_PUBLISH_RATE); 
 			if (_lastPublishTimeStamp < millis())
 			{
 				_lastPublishTimeStamp = millis() + _currentPublishRate;
 				feed_watchdog();
-
-				if (_currentCommand == CommandInformation::None) {
-					if (!Serial2.available()) {
-						char bdevid[4];
-						sprintf(bdevid, "%02X", 1);
-						send_cmd(1, CommandInformation::GetVersionInfo, bdevid);
-					}
-				}
-				else {
-					if (Serial2.available()) {
-						if (readFromSerial(_currentCommand) == 0) {
-							_currentCommand = CommandInformation::None;
-							logi("processed command!");
-						};
-					}
-				}
+				// String test = "~250146900000FDAD\r";
+				String test = "~25FF4642E00201FD05\r";
+				_asyncSerial.Send(CommandInformation::AnalogValueFixedPoint, (byte*)test.c_str(), (size_t)test.length());
+				// if (_currentCommand == CommandInformation::None) {
+				// 	if (!Serial2.available()) {
+				// 		char bdevid[4];
+				// 		sprintf(bdevid, "%02X", 1);
+				// 		send_cmd(1, CommandInformation::GetVersionInfo, bdevid);
+				// 	}
+				// }
+				// else {
+				// 	if (Serial2.available()) {
+				// 		if (parseResponse(_currentCommand) == 0) {
+				// 			_currentCommand = CommandInformation::None;
+				// 			logi("processed command!");
+				// 		};
+				// 	}
+				// }
 			}
 			if (!_stayAwake && _publishCount >= WAKE_COUNT)
 			{

@@ -1,6 +1,8 @@
 #include "AsyncSerial.h"
+#include "Log.h"
 
-#define BufferSize 1024
+
+#define BufferSize 2048
 
 AsyncSerial::AsyncSerial(AsyncSerialCallback onReceivedOk, AsyncSerialCallback onTimeout, AsyncSerialCallback onOverflow)
 {
@@ -21,52 +23,66 @@ AsyncSerial::~AsyncSerial()
 void AsyncSerial::begin(unsigned long baud, uint32_t config, int8_t rxPin, int8_t txPin)
 {
 	Serial2.begin(baud, config, rxPin, txPin);
+	while (!Serial2) {}
 	_stream = &Serial2;
 }
 
-AsyncSerial::Status AsyncSerial::Receive(int timeOut)
+void AsyncSerial::Receive(int timeOut)
 {
-	if (_status != RECEIVING_DATA) { return _status; }
+	if (_status != RECEIVING_DATA) { return; }
 	Timeout = timeOut;
 	_startTime = millis();
+	bool SOIfound = false;
 	while (_status < MESSAGE_RECEIVED)
 	{
 		if (IsExpired())
 		{
-			if (OnTimeout != nullptr) OnTimeout(*this);
 			_status = TIMEOUT;
+			if (OnTimeout != nullptr) OnTimeout(*this);
 		}
 		if (_status == RECEIVING_DATA)
 		{
 			while (_stream->available())
 			{
 				byte newData = _stream->read();
-				if (newData == (byte)FinishChar) {
-					_status = MESSAGE_RECEIVED;
-					if (OnReceivedOk != nullptr) OnReceivedOk(*this);
-					_bufferIndex = 0;
-					_status == IDDLE;
-				}
-				else {
-					if (_bufferIndex >= _bufferLength)
-					{
-						_bufferIndex %= _bufferLength;
-						_status = RECEIVING_DATA_OVERFLOW;
-						if (OnOverflow != nullptr) OnOverflow(*this);
+				if (SOIfound) {
+					if (newData == (byte)EOIChar) {
+						_status = MESSAGE_RECEIVED;
+						_buffer[_bufferIndex] = 0;
+						if (OnReceivedOk != nullptr) OnReceivedOk(*this); // call service function to handle payload
 					}
-					_buffer[_bufferIndex] = newData;
-					_bufferIndex++;
+					else {
+						if (_bufferIndex >= _bufferLength) {
+							_status = RECEIVING_DATA_OVERFLOW;
+							if (OnOverflow != nullptr) OnOverflow(*this);
+						}
+						else {
+							_buffer[_bufferIndex++] = newData;
+						}
+					}
+				}
+				else if (newData == (byte)SOIChar) { // discard until SOI received
+					_bufferIndex = 0;
+					memset(_buffer, 0, BufferSize); // clear buffer on new SOI
+					_buffer[_bufferIndex++] = newData;
+					SOIfound = true;
 				}
 			}
 		}
 	}
-	return _status;
+	_bufferIndex = 0; // recieved, timedout or overflowed - reset for next message
+	_status = IDDLE;
+	return;
 }
 
-void AsyncSerial::Send(byte* data, size_t dataLength)
+void AsyncSerial::Send(CommandInformation cmd, byte* data, size_t dataLength)
 {
+	if (_status != IDDLE) { return; }
+	logd("send cmd: %d data: %s", cmd, data);
 	_stream->write(data, dataLength);
 	_status = RECEIVING_DATA;
+	_command = cmd;
+	return;
 }
 
 inline bool AsyncSerial::IsExpired()
@@ -80,7 +96,7 @@ byte * AsyncSerial::GetContent()
 	return _buffer;
 }
 
-uint8_t AsyncSerial::GetContentLength()
+uint16_t AsyncSerial::GetContentLength()
 {
 	return _bufferIndex;
 }
