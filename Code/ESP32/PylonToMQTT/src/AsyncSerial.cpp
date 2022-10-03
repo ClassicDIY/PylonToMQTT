@@ -39,6 +39,7 @@ void AsyncSerial::Receive(int timeOut)
 		{
 			_status = TIMEOUT;
 			if (OnTimeout != nullptr) OnTimeout(*this);
+			break;
 		}
 		if (_status == RECEIVING_DATA)
 		{
@@ -50,11 +51,13 @@ void AsyncSerial::Receive(int timeOut)
 						_status = MESSAGE_RECEIVED;
 						_buffer[_bufferIndex] = 0;
 						if (OnReceivedOk != nullptr) OnReceivedOk(*this); // call service function to handle payload
+						break;
 					}
 					else {
 						if (_bufferIndex >= _bufferLength) {
-							_status = RECEIVING_DATA_OVERFLOW;
+							_status = DATA_OVERFLOW;
 							if (OnOverflow != nullptr) OnOverflow(*this);
+							break;
 						}
 						else {
 							_buffer[_bufferIndex++] = newData;
@@ -77,8 +80,7 @@ void AsyncSerial::Receive(int timeOut)
 
 void AsyncSerial::Send(CommandInformation cmd, byte* data, size_t dataLength)
 {
-	if (_status != IDDLE) { return; }
-	logd("send cmd: %d data: %s", cmd, data);
+	if (_status != IDDLE) { loge("Not Idle!"); return; }
 	_stream->write(data, dataLength);
 	_status = RECEIVING_DATA;
 	_command = cmd;

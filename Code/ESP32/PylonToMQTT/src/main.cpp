@@ -8,7 +8,8 @@
 #include "AsyncMqttClient.h"
 #include "Log.h"
 #include "Enumerations.h"
-#include "AsyncSerial.h"
+
+#include "Pylon.h"
 
 // Include Update server
 #ifdef ESP8266
@@ -19,7 +20,7 @@
 
 #define MAX_PUBLISH_RATE 30000
 #define MIN_PUBLISH_RATE 1000
-#define WAKE_PUBLISH_RATE 5000
+#define WAKE_PUBLISH_RATE 10000
 #define SNOOZE_PUBLISH_RATE 300000
 #define WAKE_COUNT 60
 #define CONFIG_VERSION "V1.0.1" // major.minor.build (major or minor will invalidate the configuration)
@@ -62,16 +63,14 @@ unsigned long _lastPublishTimeStamp = 0;
 unsigned long _currentPublishRate = WAKE_PUBLISH_RATE; // rate currently being used
 unsigned long _wakePublishRate = WAKE_PUBLISH_RATE; // wake publish rate set by config or mqtt command
 boolean _stayAwake = true;
+bool _clientsConfigured = false;
 int _publishCount = 0;
 
-bool _clientsConfigured = false;
-CommandInformation _currentCommand = CommandInformation::None;
-
-int parseResponse(char *szResponse, size_t readNow, CommandInformation cmd);
-
+Pylon _Pylon;
 void complete(AsyncSerial& sender)
 {
-	parseResponse((char*)sender.GetContent(), sender.GetContentLength(), (CommandInformation)sender.GetToken());
+	_Pylon.ParseResponse((char*)sender.GetContent(), sender.GetContentLength(), (CommandInformation)sender.GetToken());
+
 }
 
 void overflow(AsyncSerial& sender)
@@ -82,9 +81,10 @@ void overflow(AsyncSerial& sender)
 void timeout(AsyncSerial& sender)
 {
 	loge("  Response from AsyncSerial: timeout");
+	// _asyncSerial.register_callback(&Pylon::test);
 }
-
 AsyncSerial _asyncSerial(complete, timeout, overflow);
+
 
 void IRAM_ATTR resetModule()
 {
@@ -308,193 +308,13 @@ void onMqttMessage(char *topic, char *payload, AsyncMqttClientMessageProperties 
 	Wake(); // wake on any MQTT command received
 }
 
-uint16_t get_frame_checksum(char* frame){
-	uint16_t sum = 0;
-	uint16_t len = strlen(frame);
-	for (int i = 0; i < len; i++) {
-		sum += frame[i];
-	}
-	sum = ~sum;
-	sum %= 0x10000;
-	sum += 1;
-	return sum;
-}
-
-int get_info_length(const char* info) {
-	size_t lenid = strlen(info);
-	if (lenid == 0)
-		return 0;
-	int lenid_sum = (lenid & 0xf) + ((lenid >> 4) & 0xf) + ((lenid >> 8) & 0xf);
-	int lenid_modulo = lenid_sum % 16;
-	int lenid_invert_plus_one = 0b1111 - lenid_modulo + 1;
-	return (lenid_invert_plus_one << 12) + lenid;
-}
-
-void encode_cmd(char* frame, uint8_t address, uint8_t cid2, const char* info) {
-	char sub_frame[64];
-	uint8_t cid1 = 0x46;
-	sprintf(sub_frame, "%02X%02X%02X%02X%04X", 0x20, address, cid1, cid2, get_info_length(info));
-	strcat(sub_frame, info);
-	sprintf(frame, "~%s%04X\r", sub_frame, get_frame_checksum(sub_frame));
-	return;
-}
-
-void send_cmd(uint8_t address, CommandInformation cmd, const char* info = "") {
-	_currentCommand = cmd;
-	char raw_frame[64];
-	memset(raw_frame, 0, 64);
-	encode_cmd(raw_frame, address, cmd, info);
-	loge("send_cmd: %s", raw_frame);
-	Serial2.write(raw_frame);
-}
-
-
-String convert_ASCII(char* p){
-   String ascii = "";
-   String hex = p;
-   for (size_t i = 0; i < strlen(p); i += 2){
-      String part = hex.substring(i, 2);
-      ascii += strtol(part.c_str(), nullptr, 16);
-   }
-   return ascii;
-}
-
-int parseValue(char** pp, int l){
-	char* buf = (char *)malloc(l+1);
-	for (int i =0; i < l; i++) {
-		buf[i] = **pp;
-		*pp += 1;
-	}
-	buf[l] = 0;
-	int number = (int)strtol(buf, NULL, 16);
-	free(buf);
-	return number;
-}
-
-int parseResponse(char *szResponse, size_t readNow, CommandInformation cmd)
-{
-	if(readNow > 0 && szResponse[0] != '\0')
-	{
-		logd("received: %d", readNow);
-		logd("data: %s", szResponse);
-
-		char* eptr = &szResponse[readNow-4];
-		char ** pp = & eptr;
-		uint16_t CHKSUM = parseValue(pp, 4);
-		uint16_t sum = 0;
-		for (int i = 1; i < readNow-4; i++) {
-			sum += szResponse[i];
-		}
-		if (((CHKSUM+sum) & 0xFFFF) != 0) { 
-			uint16_t c = ~sum + 1;
-			loge("Checksum failed: %04x, should be: %04X", sum, c); 
-			// return -1;
-		} 
-			else { 
-				logi("Checksum passed"); 
-		}
-		char* ptr = &szResponse[1]; // skip SOI (~)
-		pp = & ptr;
-		uint16_t VER = parseValue(pp, 2);
-		uint16_t ADR = parseValue(pp, 2);
-		uint16_t CID1 = parseValue(pp, 2);
-		uint16_t CID2 = parseValue(pp, 2);
-		uint16_t LENGTH = parseValue(pp, 4);
-		uint16_t LCHKSUM = LENGTH & 0xF000;
-		uint16_t LENID = LENGTH & 0x0FFF;
-		char* infoPtr = ptr; // mark start on info
-		if (readNow < (LENID + 17)) {  
-			loge("Data length error LENID: %d, Received: %d", LENID, (readNow-17));
-			return -1;
-		}
-		if (LENID > 0) {
-			String hex = ptr;
-			String part = hex.substring(0,LENID);
-			logd("INFO: %s", part.c_str());
-		}
-		logd("VER: %02X, ADR: %02X, CID1: %02X, CID2: %02X, LENID: %02X (%d), CHKSUM: %02X, heap: %d", VER, ADR, CID1, CID2, LENID, LENID, CHKSUM, esp_get_free_heap_size());
-		if (CID2 != ResponseCode::Normal) {
-			loge("CID2 error code: %02X", CID2);
-			return -1;
-		}
-		StaticJsonDocument<2048> root;
-		String s;
-		switch (cmd) {
-			case CommandInformation::AnalogValueFixedPoint:
-			{
-				uint16_t INFO = parseValue(pp,4);
-				logd("CommandInformation::AnalogValueFixedPoint: INFO: %04X", INFO);
-
-				root.clear();
-				uint16_t packNumber = INFO & 0x00FF;
-				logd("packNumber: %d", packNumber);
-				char* startOfModuleData = ptr;
-				JsonArray modules = root.createNestedArray("Modules");
-				while ((ptr - infoPtr) < LENID) {
-					JsonObject module = modules.createNestedObject();
-					char key[16];
-					uint16_t CELLS = parseValue(pp, 2);
-					logd("CELLS: %d", CELLS);
-					for (int i = 0; i < CELLS; i++) {
-						sprintf(key, "Cell%d", i+1);
-						module[key] = parseValue(pp, 4)/1000.0;
-					}
-					uint16_t TEMPS = parseValue(pp,2);
-					logd("TEMPS: %d", TEMPS);
-					for (int i = 0; i < (TEMPS); i++) {
-
-						sprintf(key, "Temp%d", i+1);
-						modules[key] = parseValue(pp,4)/100.0;
-					}
-					module["BatCurrent"] = (parseValue(pp, 4)/1000.0);
-					module["BatVoltage"] = (parseValue(pp, 4)/1000.0);
-					int remain = parseValue(pp, 4);
-					logd("remain: %d", remain);
-					module["RemainingCapacity"] = (remain/100.0);	
-					ptr += 2; // skip 02 userdef
-					int total = parseValue(pp, 4);
-					logd("total: %d", total);
-					module["TotalCapacity"] = (total/100.0);
-					module["CycleCount"] = parseValue(pp, 4);
-					module["SOC"] = (remain * 100) / total;	
-					module["LAST"] = (parseValue(pp, 6));
-					logd("ptr: %d, infoPtr: %d", ptr, infoPtr);				
-				}
-				int moduleDataLength = ptr - startOfModuleData; // calculate length of module data
-				logd("moduleDataLength: %d", moduleDataLength);
-		
-				serializeJson(root, s);
-				publish("readings", s.c_str());
-				_publishCount++;
-			}
-			break;
-			case CommandInformation::GetVersionInfo:
-				logi("GetVersionInfo");
-			break;
-			case CommandInformation::AlarmInfo:
-				logi("GetAlarm");
-			break;
-			case CommandInformation::GetBarCode:
-				logi("GetBarCode");
-			break;
-			case CommandInformation::GetPackCount:
-			{
-				uint8_t num = parseValue(pp, LENID);
-				logi("GetPackCount: %d", num);
-			}
-			break;
-		}
-
-	}
-	return 0;
-}
-
 void setup()
 {
 	Serial.begin(115200);
 	while (!Serial) {}
 	// Set up serial port used to communicate with battery
 	_asyncSerial.begin(BAUDRATE, SERIAL_8N1, RXPIN, TXPIN);
+	_Pylon.begin(&_asyncSerial, publish);
 	pinMode(FACTORY_RESET_PIN, INPUT_PULLUP);
 	_iotWebConf.setStatusPin(WIFI_STATUS_PIN);
 	_iotWebConf.setConfigPin(WIFI_AP_PIN);
@@ -593,23 +413,10 @@ void loop()
 				_lastPublishTimeStamp = millis() + _currentPublishRate;
 				feed_watchdog();
 				// String test = "~250146900000FDAD\r";
-				String test = "~25FF4642E00201FD05\r";
-				_asyncSerial.Send(CommandInformation::AnalogValueFixedPoint, (byte*)test.c_str(), (size_t)test.length());
-				// if (_currentCommand == CommandInformation::None) {
-				// 	if (!Serial2.available()) {
-				// 		char bdevid[4];
-				// 		sprintf(bdevid, "%02X", 1);
-				// 		send_cmd(1, CommandInformation::GetVersionInfo, bdevid);
-				// 	}
-				// }
-				// else {
-				// 	if (Serial2.available()) {
-				// 		if (parseResponse(_currentCommand) == 0) {
-				// 			_currentCommand = CommandInformation::None;
-				// 			logi("processed command!");
-				// 		};
-				// 	}
-				// }
+				// String test = "~25FF4642E00201FD05\r";
+				// _asyncSerial.Send(CommandInformation::AnalogValueFixedPoint, (byte*)test.c_str(), (size_t)test.length());
+
+				_Pylon.send_cmd(0xFF, CommandInformation::AnalogValueFixedPoint);
 			}
 			if (!_stayAwake && _publishCount >= WAKE_COUNT)
 			{

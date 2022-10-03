@@ -36,6 +36,15 @@
 
 // };
 
+typedef enum
+{
+    IDDLE,
+    RECEIVING_DATA,
+    MESSAGE_RECEIVED,
+    DATA_OVERFLOW,
+    TIMEOUT,
+}  Status;
+
 enum CommandInformation : byte
 {
     None = 0x00,
