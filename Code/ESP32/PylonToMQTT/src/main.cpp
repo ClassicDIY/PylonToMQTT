@@ -76,12 +76,13 @@ void complete(AsyncSerial& sender)
 void overflow(AsyncSerial& sender)
 {
 	loge("  Response from AsyncSerial: overflow");
+	_Pylon.Next(); // move on
 }
 
 void timeout(AsyncSerial& sender)
 {
 	loge("  Response from AsyncSerial: timeout");
-	// _asyncSerial.register_callback(&Pylon::test);
+	_Pylon.Next(); // move on
 }
 AsyncSerial _asyncSerial(complete, timeout, overflow);
 
@@ -412,11 +413,8 @@ void loop()
 			{
 				_lastPublishTimeStamp = millis() + _currentPublishRate;
 				feed_watchdog();
-				// String test = "~250146900000FDAD\r";
-				// String test = "~25FF4642E00201FD05\r";
-				// _asyncSerial.Send(CommandInformation::AnalogValueFixedPoint, (byte*)test.c_str(), (size_t)test.length());
 
-				_Pylon.send_cmd(0xFF, CommandInformation::AnalogValueFixedPoint);
+				_Pylon.loop();
 			}
 			if (!_stayAwake && _publishCount >= WAKE_COUNT)
 			{

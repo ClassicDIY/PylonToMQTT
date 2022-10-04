@@ -1,0 +1,50 @@
+
+
+GetAlarmInfo CID2:0x44
+Sample with 16 cells, 6 temps
+
+
+
+
+                                                                                                   1      
+         1         2         3         4         5         6         7         8         9         0  
+12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901
+25014600E04E000110020202020101010000000000000000010602010101010200020200000000000000000000
+
+17: Number of cells
+19: Cell 1: below lower limit - 0x01, above higher limit - 0x02
+21
+23
+25
+27
+29
+31
+33
+35
+37
+39
+41
+43
+45
+47:
+49: Cell 16: below lower limit - 0x01, above higher limit - 0x02
+51: Number of Temps
+53: Tcell 1 (Cell temperature 1~4): below lower limit - 0x01, above higher limit - 0x02
+55: Tcell 2 (Cell temperature 5~8):
+57: Tcell 3 (Cell temperature 9~12):
+59: Tcell 4 (Cell temperature 13~16):
+61: MOS_T (MOSFET temperature):
+63: ENV_T: (Environment temperature) 
+65: 00
+67: Pack Voltage 01 02
+69: Pack Current 01 02 
+71  Protect Status: Charger OVP 0x80, SCP 0x40, DSG OCP 0x20, CHG OCP 0x10, Pack UVP 0x08, Pack OVP 0x04, Cell UVP 0x02, Cell OVP 0x01
+73: Fully (0x80) - Protect Status: (ENV UTP 0x40, ENV OTP 0x20, MOS OTP 0x10, DSG UTP 0x08, CHG UTP 0x04, DSG OTP 0x02, CHG OTP 0x01)
+75  System Status: htr-on 0x80, 0x40  , AC in 0x20, 0x10  , 0x08  , DSG-MOS-ON 0x04, CHG-MOS-ON 0x02, CHG-LIMIT-ON 0x01 
+77: 00
+79  Fault Status: (Heater Fault 0x80 , CCB Fault 0x40, Sampling Fault 0x20, Cell Fault 0x10, NTC Fault 0x04, DSG MOS Fault 0x02, CHG MOS Fault 0x01)
+81
+83  
+85  Alarm status: (DSG OC 0x20, CHG OC 0x10, Pack UV 0x08, Pack OV 0x04, Cell UV 0x02, Cell OV 0x01)
+87  Alarm status: (SOC Low 0x80, MOS OT 0x40, ENV UT 0x20, ENV OT 0x10, DSG UT 0x08, CHG UT 0x04, DSG OT 0x02, CHG OT 0x01
+89  00

@@ -1,8 +1,31 @@
+#include <vector>
 #include "Pylon.h"
 #include "Log.h"
 
+CommandInformation _commands[] = { CommandInformation::GetVersionInfo, CommandInformation::GetBarCode, CommandInformation::AnalogValueFixedPoint, CommandInformation::AlarmInfo };
+std::string _tempKeys[] = { "CellTemp1~4", "CellTemp5~8", "CellTemp9~12", "CellTemp13~16", "MOS_T", "ENV_T"};
+
 Pylon::Pylon()
 {
+}
+
+void Pylon::loop() {
+    if (_numberOfPacks == 0){
+	    send_cmd(0xFF, CommandInformation::GetPackCount);
+    }
+    else {
+		send_cmd(_currentPack+1, _commands[_commandIndex]);
+		Next();
+    }
+}
+
+void Pylon::Next(){
+	_commandIndex++;
+	if (_commandIndex == sizeof(_commands)){
+		_commandIndex = 0;
+		_currentPack++;
+		_currentPack %= _numberOfPacks;
+	}
 }
 
 uint16_t Pylon::get_frame_checksum(char* frame){
@@ -58,16 +81,24 @@ String Pylon::convert_ASCII(char* p){
    return ascii;
 }
 
-int Pylon::parseValue(char** pp, int l){
-	char* buf = (char *)malloc(l+1);
-	for (int i =0; i < l; i++) {
-		buf[i] = **pp;
-		*pp += 1;
-	}
-	buf[l] = 0;
-	int number = (int)strtol(buf, NULL, 16);
-	free(buf);
-	return number;
+#define toShort(i, v) (v[i++]<<8) | v[i++]
+
+unsigned char parse_hex(char c)
+{
+    if ('0' <= c && c <= '9') return c - '0';
+    if ('A' <= c && c <= 'F') return c - 'A' + 10;
+    if ('a' <= c && c <= 'f') return c - 'a' + 10;
+    return 0;
+}
+
+std::vector<unsigned char> parse_string(const std::string & s)
+{
+    size_t size = s.size();
+    if (size % 2 != 0) size++;
+    std::vector<unsigned char> result(size / 2);
+    for (std::size_t i = 0; i != size / 2; ++i)
+        result[i] = 16 * parse_hex(s[2 * i]) + parse_hex(s[2 * i + 1]);
+    return result;
 }
 
 int Pylon::ParseResponse(char *szResponse, size_t readNow, CommandInformation cmd)
@@ -77,10 +108,12 @@ int Pylon::ParseResponse(char *szResponse, size_t readNow, CommandInformation cm
 		logd("received: %d", readNow);
 		logd("data: %s", szResponse);
 
-		char* eptr = &szResponse[readNow-4];
-		char** pp = &eptr;
-		uint16_t CHKSUM = parseValue(pp, 4);
-		uint16_t sum = 0;
+        std::string chksum; 
+        chksum.assign(&szResponse[readNow-4]);
+        std::vector<unsigned char> cs = parse_string(chksum);
+        int i = 0;
+        uint16_t CHKSUM = toShort(i, cs);
+        uint16_t sum = 0;
 		for (int i = 1; i < readNow-4; i++) {
 			sum += szResponse[i];
 		}
@@ -92,88 +125,95 @@ int Pylon::ParseResponse(char *szResponse, size_t readNow, CommandInformation cm
 			else { 
 				logi("Checksum passed"); 
 		}
-		char* ptr = &szResponse[1]; // skip SOI (~)
-		pp = &ptr;
-		uint16_t VER = parseValue(pp, 2);
-		uint16_t ADR = parseValue(pp, 2);
-		uint16_t CID1 = parseValue(pp, 2);
-		uint16_t CID2 = parseValue(pp, 2);
-		uint16_t LENGTH = parseValue(pp, 4);
+        std::string frame;
+        frame.assign(&szResponse[1]); // skip SOI (~)
+        std::vector<unsigned char> v = parse_string(frame);
+        int index = 0;
+		uint16_t VER = v[index++];
+		uint16_t ADR = v[index++];
+		uint16_t CID1 = v[index++];
+		uint16_t CID2 = v[index++];
+		uint16_t LENGTH = toShort(index, v);
 		uint16_t LCHKSUM = LENGTH & 0xF000;
 		uint16_t LENID = LENGTH & 0x0FFF;
 		if (readNow < (LENID + 17)) {  
-			loge("Data length error LENID: %d, Received: %d", LENID, (readNow-17));
+			loge("Data length error LENGTH: %04X LENID: %04X, Received: %d", LENGTH, LENID, (readNow-17));
 			return -1;
-		}
-		if (LENID > 0) {
-			String hex = ptr;
-			String part = hex.substring(0,LENID);
-			logd("INFO: %s", part.c_str());
 		}
 		logd("VER: %02X, ADR: %02X, CID1: %02X, CID2: %02X, LENID: %02X (%d), CHKSUM: %02X", VER, ADR, CID1, CID2, LENID, LENID, CHKSUM);
 		if (CID2 != ResponseCode::Normal) {
 			loge("CID2 error code: %02X", CID2);
 			return -1;
 		}
-		StaticJsonDocument<2048> root;
+
 		String s;
 		switch (cmd) {
 			case CommandInformation::AnalogValueFixedPoint:
 			{
-				uint16_t INFO = parseValue(pp,4);
+				uint16_t INFO = toShort(index, v);
 				uint16_t packNumber = INFO & 0x00FF;
 				logd("AnalogValueFixedPoint: INFO: %04X, Pack: %d", INFO, packNumber);
-				root.clear();
-				char* startOfModuleData = ptr;
-				JsonArray modules = root.createNestedArray("Modules");
-				logd("initial data size: %d", eptr - ptr);
+				
+				JsonArray modules = _root.createNestedArray("Modules");
 				// while (ptr < eptr) {
 					JsonObject module = modules.createNestedObject();
 					char key[16];
-					uint16_t CELLS = parseValue(pp, 2);
+					uint16_t CELLS = v[index++];
 					logd("CELLS: %d", CELLS);
 					for (int i = 0; i < CELLS; i++) {
 						sprintf(key, "Cell%d", i+1);
-						module[key] = parseValue(pp, 4)/1000.0;
+						module[key] = (toShort(index, v))/1000.0;
 					}
-					uint16_t TEMPS = parseValue(pp,2);
+					uint16_t TEMPS = v[index++];
 					logd("TEMPS: %d", TEMPS);
-					for (int i = 0; i < (TEMPS); i++) {
-
-						sprintf(key, "Temp%d", i+1);
-						modules[key] = parseValue(pp,4)/100.0;
+					for (int i = 0; i < TEMPS; i++) {
+						if ( i < _tempKeys->length()) {
+							module[_tempKeys[i]] = (toShort(index, v))/100.0;
+						}
 					}
-					module["BatCurrent"] = (parseValue(pp, 4)/1000.0);
-					module["BatVoltage"] = (parseValue(pp, 4)/1000.0);
-					int remain = parseValue(pp, 4);
-					logd("remain: %d", remain);
-					module["RemainingCapacity"] = (remain/100.0);	
-					ptr += 2; // skip 02 userdef
-					int total = parseValue(pp, 4);
-					logd("total: %d", total);
-					module["TotalCapacity"] = (total/100.0);
-					module["CycleCount"] = parseValue(pp, 4);
+					module["PackCurrent"] = (toShort(index, v))/1000.0;
+					module["PackVoltage"] = (toShort(index, v))/1000.0;
+					int remain = toShort(index, v);
+					module["RemainingCapacity"] = (remain/100.0);
+                    index++; //skip user def code	
+					int total = toShort(index, v);
+					module["FullCapacity"] = (total/100.0);
+					module["CycleCount"] = ((v[index++]<<8) | v[index++]);
 					module["SOC"] = (remain * 100) / total;	
-					module["LAST"] = (parseValue(pp, 6));
+					// module["LAST"] = ((v[index++]<<8) | (v[index++]<<8) | v[index++]); 
 				// }
-				serializeJson(root, s);
+				serializeJson(_root, s);
 				_pcb("readings", s.c_str(), false);
 
 			}
 			break;
-			case CommandInformation::GetVersionInfo:
+			case CommandInformation::GetVersionInfo: {
 				logi("GetVersionInfo");
+				std::string ver;
+				std::string s(v.begin(), v.end());
+				ver = s.substr(index);
+				_root["Version"] = ver;
+			}
 			break;
 			case CommandInformation::AlarmInfo:
 				logi("GetAlarm");
+                // uint16_t INFO = toShort(index, v);
+				// uint16_t packNumber = INFO & 0x00FF;
 			break;
-			case CommandInformation::GetBarCode:
+			case CommandInformation::GetBarCode: {
 				logi("GetBarCode");
+				std::string bc;
+				std::string s(v.begin(), v.end());
+				bc = s.substr(index);
+				_root["BarCode"] = bc;
+			}
 			break;
 			case CommandInformation::GetPackCount:
 			{
-				uint8_t num = parseValue(pp, LENID);
-				logi("GetPackCount: %d", num);
+                _numberOfPacks = v[index];
+                _numberOfPacks > 8 ? 1 : _numberOfPacks; // max 8, default to 1
+				_root.clear();
+				logi("GetPackCount: %d", _numberOfPacks);
 			}
 			break;
 		}

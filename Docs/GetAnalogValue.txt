@@ -1,0 +1,43 @@
+
+
+GetAnalogValue(FF)
+~25FF4642E00201FD05
+~25014600D07C0001100D200D240D240D210D210D220D230D240D220D210D220D220D230D220D230D21060B230B210B270B260B450B4E0050D22327CF0227D6000B271063 E372
+
+
+                                                                                                   1      
+         1         2         3         4         5         6         7         8         9         0         1         2         3         4   
+12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+25014600D07C0001100D200D240D240D210D210D220D230D240D220D210D220D220D230D220D230D21060B230B210B270B260B450B4E0050D22327CF0227D6000B271063
+
+17: Number of cells
+19: Cell 1: volage (mv)
+23
+27
+31
+35
+39
+43
+47
+51
+55
+59
+63
+67
+71
+75
+79: Cell 16: volage (mv)
+83: Number of Temps
+85: Tcell 1 (Cell temperature 1~4): Celsius /100
+89: Tcell 2 (Cell temperature 5~8):
+93: Tcell 3 (Cell temperature 9~12):
+97: Tcell 4 (Cell temperature 13~16):
+101: MOS_T (MOSFET temperature):
+105: ENV_T: (Environment temperature) 
+109: Pack Current mA
+113: Pack Voltage mv
+117: Remaining Capacity
+121: User Define Code: 02
+123: Full Capacity mAh { SOC: (Remaining Capacity * 100) / Full Capacity }
+127: Cycle Count: 0~65535
+131: 271063 ???

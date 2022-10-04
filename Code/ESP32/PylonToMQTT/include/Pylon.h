@@ -5,17 +5,26 @@
 #include "Enumerations.h"
 #include "AsyncSerial.h"
 
+
+
 class Pylon
 {
+    
     typedef void(*PublishCallback)(const char *subtopic, const char *value, boolean retained);
  public:
 
 	Pylon();
     void begin(AsyncSerial* ser, PublishCallback pcb) { _asyncSerial = ser; _pcb = pcb; };
+    void loop();
     int ParseResponse(char *szResponse, size_t readNow, CommandInformation cmd);
-    void send_cmd(uint8_t address, CommandInformation cmd);
+    void Next();
+
 
  protected:
+ 	StaticJsonDocument<2048> _root;
+    uint8_t _commandIndex = 0;
+    uint8_t _numberOfPacks = 0;
+    uint8_t _currentPack = 0;
     AsyncSerial* _asyncSerial;
     PublishCallback _pcb;
     CommandInformation _currentCommand = CommandInformation::None;
@@ -25,4 +34,5 @@ class Pylon
     
     String convert_ASCII(char* p);
     int parseValue(char** pp, int l);
+    void send_cmd(uint8_t address, CommandInformation cmd);
 };
