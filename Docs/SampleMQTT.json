@@ -1,0 +1,161 @@
+Topic: Pylontech/Rack1/stat/readings/pack-1
+
+
+{
+  "Version" : "P16S100A-1B470-1.04",
+  "BarCode" : "1B470102010238D     Dec  7 2021,17:52:38",
+  "Cells" : {
+    "Cell-1" : {
+      "Reading" : 3.584,
+      "State" : 2
+    },
+    "Cell-2" : {
+      "Reading" : 3.364,
+      "State" : 2
+    },
+    "Cell-3" : {
+      "Reading" : 3.364,
+      "State" : 2
+    },
+    "Cell-4" : {
+      "Reading" : 3.361,
+      "State" : 2
+    },
+    "Cell-5" : {
+      "Reading" : 3.361,
+      "State" : 1
+    },
+    "Cell-6" : {
+      "Reading" : 3.362,
+      "State" : 1
+    },
+    "Cell-7" : {
+      "Reading" : 3.363,
+      "State" : 1
+    },
+    "Cell-8" : {
+      "Reading" : 3.364,
+      "State" : 0
+    },
+    "Cell-9" : {
+      "Reading" : 3.362,
+      "State" : 0
+    },
+    "Cell-10" : {
+      "Reading" : 3.361,
+      "State" : 0
+    },
+    "Cell-11" : {
+      "Reading" : 3.362,
+      "State" : 0
+    },
+    "Cell-12" : {
+      "Reading" : 3.362,
+      "State" : 0
+    },
+    "Cell-13" : {
+      "Reading" : 3.363,
+      "State" : 0
+    },
+    "Cell-14" : {
+      "Reading" : 3.362,
+      "State" : 0
+    },
+    "Cell-15" : {
+      "Reading" : 3.363,
+      "State" : 0
+    },
+    "Cell-16" : {
+      "Reading" : 3.361,
+      "State" : 1
+    }
+  },
+  "Temps" : {
+    "CellTemp1~4" : {
+      "Reading" : 28.51,
+      "State" : 2
+    },
+    "CellTemp5~8" : {
+      "Reading" : 28.49,
+      "State" : 1
+    },
+    "CellTemp9~12" : {
+      "Reading" : 28.55,
+      "State" : 1
+    },
+    "CellTemp13~16" : {
+      "Reading" : 28.54,
+      "State" : 1
+    },
+    "MOS_T" : {
+      "Reading" : 28.85,
+      "State" : 1
+    },
+    "ENV_T" : {
+      "Reading" : 28.94,
+      "State" : 1
+    }
+  },
+  "PackCurrent" : {
+    "Reading" : 0.08,
+    "State" : 1
+  },
+  "PackVoltage" : {
+    "Reading" : 53.795,
+    "State" : 2
+  },
+  "RemainingCapacity" : 101.91,
+  "FullCapacity" : 101.98,
+  "CycleCount" : 11,
+  "SOC" : 99,
+  "Protect Status" : {
+    "Charger OVP" : 0,
+    "SCP" : 0,
+    "DSG OCP" : 0,
+    "CHG OCP" : 0,
+    "Pack UVP" : 0,
+    "Pack OVP" : 0,
+    "Cell UVP" : 0,
+    "Cell OVP" : 0,
+    "ENV UTP" : 0,
+    "ENV OTP" : 0,
+    "MOS OTP" : 0,
+    "DSG UTP" : 0,
+    "CHG UTP" : 0,
+    "DSG OTP" : 0,
+    "CHG OTP" : 0
+  },
+  "System Status" : {
+    "Fully Charged" : 128,
+    "Heater" : 0,
+    "AC in" : 0,
+    "Discharge-MOS" : 0,
+    "Charge-MOS" : 0,
+    "Charge-Limit" : 0
+  },
+  "Fault Status" : {
+    "Heater Fault" : 0,
+    "CCB Fault" : 0,
+    "Sampling Fault" : 0,
+    "Cell Fault" : 0,
+    "NTC Fault" : 0,
+    "DSG MOS Fault" : 0,
+    "CHG MOS Fault" : 0
+  },
+  "Alarm Status" : {
+    "DSG OC" : 0,
+    "CHG OC" : 0,
+    "Pack UV" : 0,
+    "Pack OV" : 0,
+    "Cell UV" : 0,
+    "Cell OV" : 0,
+    "SOC Low" : 0,
+    "MOS OT" : 0,
+    "ENV UT" : 0,
+    "ENV OT" : 0,
+    "DSG UT" : 0,
+    "CHG UT" : 0,
+    "DSG OT" : 0,
+    "CHG OT" : 0
+  }
+}

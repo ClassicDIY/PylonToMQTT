@@ -20,7 +20,7 @@ class Pylon
     bool Next();
 
  protected:
- 	StaticJsonDocument<2048> _root;
+ 	StaticJsonDocument<4096> _root;
     uint8_t _commandIndex = 0;
     uint8_t _numberOfPacks = 0;
     uint8_t _currentPack = 0;
