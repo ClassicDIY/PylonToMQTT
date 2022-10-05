@@ -1,0 +1,127 @@
+[
+    {
+        "id": "8d931bf7e831a10d",
+        "type": "tab",
+        "label": "Flow 6",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "23576b832ef59022",
+        "type": "serial in",
+        "z": "8d931bf7e831a10d",
+        "name": "",
+        "serial": "e1b98ee07cee8803",
+        "x": 110,
+        "y": 180,
+        "wires": [
+            [
+                "a22b3457a1dc78b9",
+                "25ec8cace1753c19"
+            ]
+        ]
+    },
+    {
+        "id": "a22b3457a1dc78b9",
+        "type": "debug",
+        "z": "8d931bf7e831a10d",
+        "name": "RX",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 350,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "25ec8cace1753c19",
+        "type": "function",
+        "z": "8d931bf7e831a10d",
+        "name": "function 1",
+        "func": "var input = {};\ninput = msg.payload;\n\nif (input[0] == '~') {\n    var addr = input[3] + input[4]\n    var cmd = input[5] + input[6] + input[7] + input[8]\n    var cell1 = getRandomInt(2800, 3600);\n    var hcell1 = decimalToHex(cell1, 4);\n    switch (cmd) {\n        case '4690':\n            msg.payload = `25${addr}4600E00203`;\n            break;\n        case '46C1':\n            msg.payload = `25${addr}4600602850313653313030412D31423437302D312E303400`;\n            break;\n        case '46C2':\n            msg.payload = `25${addr}4600B050314234373031303230313032333844202020202044656320203720323032312C31373A35323A3338`;\n            break;\n        case '4642':\n            msg.payload = `25${addr}4600D07C00${addr}10${hcell1}0D240D240D210D210D220D230D240D220D210D220D220D230D220D230D21060B230B210B270B260B450B4E0050D22327CF0227D6000B271063`;\n            break;\n        case '4644':\n            msg.payload = `25${addr}4600E04E00${addr}10020202020101010000000000000000010602010101010100000000000000000000000000`;\n            break;\n    }\n    return msg;\n} \n\nfunction getRandomInt(min, max) {\n    min = Math.ceil(min);\n    max = Math.floor(max);\n    return Math.floor(Math.random() * (max - min + 1)) + min;\n}\n\nfunction decimalToHex(d, padding) {\n    var hex = Number(d).toString(16);\n    padding = typeof (padding) === \"undefined\" || padding === null ? padding = 2 : padding;\n\n    while (hex.length < padding) {\n        hex = \"0\" + hex;\n    }\n\n    return hex;\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 360,
+        "y": 180,
+        "wires": [
+            [
+                "df727f6b2506240d"
+            ]
+        ]
+    },
+    {
+        "id": "92b23b714a49fd56",
+        "type": "debug",
+        "z": "8d931bf7e831a10d",
+        "name": "Trace",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 870,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "bdf7117ff228d20a",
+        "type": "serial out",
+        "z": "8d931bf7e831a10d",
+        "name": "COM9",
+        "serial": "e1b98ee07cee8803",
+        "x": 870,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "df727f6b2506240d",
+        "type": "function",
+        "z": "8d931bf7e831a10d",
+        "name": "add checksum",
+        "func": "function checksum(s) {\n    var sum = 0;\n    var len = s.length;\n    for (var i = 0; i < len; i++) {\n        sum += (s.charCodeAt(i));\n    }\n    sum = ~sum + 1;\n    return (sum & 0xffff).toString(16).toUpperCase();\n}\n\n\nmsg.payload = \"~\" + msg.payload + checksum(msg.payload) + \"\\r\";\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 640,
+        "y": 180,
+        "wires": [
+            [
+                "92b23b714a49fd56",
+                "bdf7117ff228d20a"
+            ]
+        ]
+    },
+    {
+        "id": "e1b98ee07cee8803",
+        "type": "serial-port",
+        "serialport": "COM9",
+        "serialbaud": "9600",
+        "databits": "8",
+        "parity": "none",
+        "stopbits": "1",
+        "waitfor": "~",
+        "dtr": "none",
+        "rts": "none",
+        "cts": "none",
+        "dsr": "none",
+        "newline": "\\r",
+        "bin": "false",
+        "out": "char",
+        "addchar": "",
+        "responsetimeout": "10000"
+    }
+]
