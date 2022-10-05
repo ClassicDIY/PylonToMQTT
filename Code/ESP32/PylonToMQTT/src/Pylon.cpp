@@ -9,23 +9,37 @@ Pylon::Pylon()
 {
 }
 
-void Pylon::loop() {
+bool Pylon::loop() {
+	bool sequenceComplete = false;
     if (_numberOfPacks == 0){
+		_root.clear();
 	    send_cmd(0xFF, CommandInformation::GetPackCount);
     }
     else {
 		send_cmd(_currentPack+1, _commands[_commandIndex]);
-		Next();
+		sequenceComplete = Next();
     }
+	return sequenceComplete;
 }
 
-void Pylon::Next(){
+bool Pylon::Next() {
+	bool sequenceComplete = false;
 	_commandIndex++;
 	if (_commandIndex == sizeof(_commands)){
 		_commandIndex = 0;
+		sequenceComplete = true;
+		if (_root.size() > 0) {
+			String s;
+			serializeJson(_root, s);
+			_root.clear();
+			char buf[64];
+			sprintf(buf, "readings/pack-%d", _currentPack+1); 
+			_pcb(buf, s.c_str(), false);
+		}
 		_currentPack++;
 		_currentPack %= _numberOfPacks;
 	}
+	return sequenceComplete;
 }
 
 uint16_t Pylon::get_frame_checksum(char* frame){
@@ -66,7 +80,7 @@ void Pylon::send_cmd(uint8_t address, CommandInformation cmd) {
     char bdevid[4];
     sprintf(bdevid, "%02X", address);
 	encode_cmd(raw_frame, address, cmd, bdevid);
-	loge("send_cmd: %s", raw_frame);
+	logd("send_cmd: %s", raw_frame);
     _asyncSerial->Send(cmd, (byte*)raw_frame, strlen(raw_frame));
 }
 
@@ -107,7 +121,6 @@ int Pylon::ParseResponse(char *szResponse, size_t readNow, CommandInformation cm
 	{
 		logd("received: %d", readNow);
 		logd("data: %s", szResponse);
-
         std::string chksum; 
         chksum.assign(&szResponse[readNow-4]);
         std::vector<unsigned char> cs = parse_string(chksum);
@@ -122,9 +135,6 @@ int Pylon::ParseResponse(char *szResponse, size_t readNow, CommandInformation cm
 			loge("Checksum failed: %04x, should be: %04X", sum, c); 
 			return -1;
 		} 
-			else { 
-				logi("Checksum passed"); 
-		}
         std::string frame;
         frame.assign(&szResponse[1]); // skip SOI (~)
         std::vector<unsigned char> v = parse_string(frame);
@@ -145,46 +155,40 @@ int Pylon::ParseResponse(char *szResponse, size_t readNow, CommandInformation cm
 			loge("CID2 error code: %02X", CID2);
 			return -1;
 		}
-
-		String s;
 		switch (cmd) {
 			case CommandInformation::AnalogValueFixedPoint:
 			{
 				uint16_t INFO = toShort(index, v);
 				uint16_t packNumber = INFO & 0x00FF;
-				logd("AnalogValueFixedPoint: INFO: %04X, Pack: %d", INFO, packNumber);
-				
-				JsonArray modules = _root.createNestedArray("Modules");
-				// while (ptr < eptr) {
-					JsonObject module = modules.createNestedObject();
-					char key[16];
-					uint16_t CELLS = v[index++];
-					logd("CELLS: %d", CELLS);
-					for (int i = 0; i < CELLS; i++) {
-						sprintf(key, "Cell%d", i+1);
-						module[key] = (toShort(index, v))/1000.0;
+				logi("AnalogValueFixedPoint: INFO: %04X, Pack: %d", INFO, packNumber);
+				JsonObject cells = _root.createNestedObject("Cells");
+				char key[16];
+				uint16_t CELLS = v[index++];
+				for (int i = 0; i < CELLS; i++) {
+					sprintf(key, "Cell-%d", i+1);
+					JsonObject cell = cells.createNestedObject(key);
+					cell["Reading"] = (toShort(index, v))/1000.0;
+					cell["State"] = 0;  // default to ok
+				}
+				JsonObject temps = _root.createNestedObject("Temps");
+				uint16_t TEMPS = v[index++];
+				for (int i = 0; i < TEMPS; i++) {
+					if ( i < _tempKeys->length()) {
+						JsonObject entry = temps.createNestedObject(_tempKeys[i]);
+						entry["Reading"] = (toShort(index, v))/100.0;
+						entry["State"] = 0;  // default to ok
 					}
-					uint16_t TEMPS = v[index++];
-					logd("TEMPS: %d", TEMPS);
-					for (int i = 0; i < TEMPS; i++) {
-						if ( i < _tempKeys->length()) {
-							module[_tempKeys[i]] = (toShort(index, v))/100.0;
-						}
-					}
-					module["PackCurrent"] = (toShort(index, v))/1000.0;
-					module["PackVoltage"] = (toShort(index, v))/1000.0;
-					int remain = toShort(index, v);
-					module["RemainingCapacity"] = (remain/100.0);
-                    index++; //skip user def code	
-					int total = toShort(index, v);
-					module["FullCapacity"] = (total/100.0);
-					module["CycleCount"] = ((v[index++]<<8) | v[index++]);
-					module["SOC"] = (remain * 100) / total;	
-					// module["LAST"] = ((v[index++]<<8) | (v[index++]<<8) | v[index++]); 
-				// }
-				serializeJson(_root, s);
-				_pcb("readings", s.c_str(), false);
-
+				}
+				_root["PackCurrent"] = (toShort(index, v))/1000.0;
+				_root["PackVoltage"] = (toShort(index, v))/1000.0;
+				int remain = toShort(index, v);
+				_root["RemainingCapacity"] = (remain/100.0);
+				index++; //skip user def code	
+				int total = toShort(index, v);
+				_root["FullCapacity"] = (total/100.0);
+				_root["CycleCount"] = ((v[index++]<<8) | v[index++]);
+				_root["SOC"] = (remain * 100) / total;	
+				// module["LAST"] = ((v[index++]<<8) | (v[index++]<<8) | v[index++]); 
 			}
 			break;
 			case CommandInformation::GetVersionInfo: {
@@ -217,7 +221,6 @@ int Pylon::ParseResponse(char *szResponse, size_t readNow, CommandInformation cm
 			}
 			break;
 		}
-
 	}
 	return 0;
 }

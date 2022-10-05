@@ -20,6 +20,7 @@
 
 #define MAX_PUBLISH_RATE 30000
 #define MIN_PUBLISH_RATE 1000
+#define COMMAND_PUBLISH_RATE 500 // delay between sequence of pylon commands sent to battery
 #define WAKE_PUBLISH_RATE 10000
 #define SNOOZE_PUBLISH_RATE 300000
 #define WAKE_COUNT 60
@@ -70,7 +71,6 @@ Pylon _Pylon;
 void complete(AsyncSerial& sender)
 {
 	_Pylon.ParseResponse((char*)sender.GetContent(), sender.GetContentLength(), (CommandInformation)sender.GetToken());
-
 }
 
 void overflow(AsyncSerial& sender)
@@ -411,10 +411,9 @@ void loop()
 			_asyncSerial.Receive(WAKE_PUBLISH_RATE); 
 			if (_lastPublishTimeStamp < millis())
 			{
-				_lastPublishTimeStamp = millis() + _currentPublishRate;
 				feed_watchdog();
-
-				_Pylon.loop();
+				_currentPublishRate = _Pylon.loop() == true ? _wakePublishRate : COMMAND_PUBLISH_RATE;
+				_lastPublishTimeStamp = millis() + _currentPublishRate;
 			}
 			if (!_stayAwake && _publishCount >= WAKE_COUNT)
 			{
