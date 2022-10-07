@@ -102,7 +102,7 @@ String Pylon::convert_ASCII(char* p){
    return ascii;
 }
 
-#define CheckBit(var,pos) ((var) & (1<<(pos)))
+#define CheckBit(var,pos) ((var) & (1<<(pos))) ? true : false
 #define toShort(i, v) (v[i++]<<8) | v[i++]
 
 unsigned char parse_hex(char c)
