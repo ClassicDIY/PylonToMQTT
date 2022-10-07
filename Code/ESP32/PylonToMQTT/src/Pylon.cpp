@@ -5,12 +5,18 @@
 CommandInformation _commands[] = { CommandInformation::GetVersionInfo, CommandInformation::GetBarCode, CommandInformation::AnalogValueFixedPoint, CommandInformation::AlarmInfo, CommandInformation::None };
 std::string _tempKeys[] = { "CellTemp1~4", "CellTemp5~8", "CellTemp9~12", "CellTemp13~16", "MOS_T", "ENV_T"};
 
-
 Pylon::Pylon()
 {
+	_asyncSerial = new AsyncSerial();
+	_asyncSerial->begin(this, BAUDRATE, SERIAL_8N1, RXPIN, TXPIN);
 }
 
-bool Pylon::loop() {
+Pylon::~Pylon()
+{
+	delete _asyncSerial;
+}
+
+bool Pylon::Transmit() {
 	bool sequenceComplete = false;
     if (_numberOfPacks == 0){
 		_root.clear();

@@ -68,24 +68,6 @@ bool _clientsConfigured = false;
 int _publishCount = 0;
 
 Pylon _Pylon;
-void complete(AsyncSerial& sender)
-{
-	_Pylon.ParseResponse((char*)sender.GetContent(), sender.GetContentLength(), (CommandInformation)sender.GetToken());
-}
-
-void overflow(AsyncSerial& sender)
-{
-	loge("  Response from AsyncSerial: overflow");
-	_Pylon.Next(); // move on
-}
-
-void timeout(AsyncSerial& sender)
-{
-	loge("  Response from AsyncSerial: timeout");
-	_Pylon.Next(); // move on
-}
-AsyncSerial _asyncSerial(complete, timeout, overflow);
-
 
 void IRAM_ATTR resetModule()
 {
@@ -313,9 +295,8 @@ void setup()
 {
 	Serial.begin(115200);
 	while (!Serial) {}
-	// Set up serial port used to communicate with battery
-	_asyncSerial.begin(BAUDRATE, SERIAL_8N1, RXPIN, TXPIN);
-	_Pylon.begin(&_asyncSerial, publish);
+	// Set up object used to communicate with battery, provide callback to MQTT publish
+	_Pylon.begin(publish);
 	pinMode(FACTORY_RESET_PIN, INPUT_PULLUP);
 	_iotWebConf.setStatusPin(WIFI_STATUS_PIN);
 	_iotWebConf.setConfigPin(WIFI_AP_PIN);
@@ -408,11 +389,11 @@ void loop()
 	{
 		if (_mqttClient.connected())
 		{
-			_asyncSerial.Receive(WAKE_PUBLISH_RATE); 
+			_Pylon.Receive(WAKE_PUBLISH_RATE); 
 			if (_lastPublishTimeStamp < millis())
 			{
 				feed_watchdog();
-				_currentPublishRate = _Pylon.loop() == true ? _wakePublishRate : COMMAND_PUBLISH_RATE;
+				_currentPublishRate = _Pylon.Transmit() == true ? _wakePublishRate : COMMAND_PUBLISH_RATE;
 				_lastPublishTimeStamp = millis() + _currentPublishRate;
 			}
 			if (!_stayAwake && _publishCount >= WAKE_COUNT)

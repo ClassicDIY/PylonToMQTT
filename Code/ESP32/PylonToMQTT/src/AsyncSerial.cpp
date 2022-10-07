@@ -1,18 +1,14 @@
 #include "AsyncSerial.h"
 #include "Log.h"
 
-
 #define BufferSize 2048
 
-AsyncSerial::AsyncSerial(AsyncSerialCallback onReceivedOk, AsyncSerialCallback onTimeout, AsyncSerialCallback onOverflow)
+AsyncSerial::AsyncSerial()
 {
 	_status = IDDLE;
 	_buffer = (byte*)malloc(BufferSize);
 	_bufferLength = BufferSize;
 	_bufferIndex = 0;
-	OnReceivedOk = onReceivedOk;
-	OnTimeout = onTimeout;
-	OnOverflow = onOverflow;
 }
 
 AsyncSerial::~AsyncSerial()
@@ -20,8 +16,9 @@ AsyncSerial::~AsyncSerial()
 	free(_buffer);
 }
 
-void AsyncSerial::begin(unsigned long baud, uint32_t config, int8_t rxPin, int8_t txPin)
+void AsyncSerial::begin(AsyncSerialCallbackInterface* cbi, unsigned long baud, uint32_t config, int8_t rxPin, int8_t txPin)
 {
+	_cbi = cbi;
 	Serial2.begin(baud, config, rxPin, txPin);
 	while (!Serial2) {}
 	_stream = &Serial2;
@@ -38,7 +35,7 @@ void AsyncSerial::Receive(int timeOut)
 		if (IsExpired())
 		{
 			_status = TIMEOUT;
-			if (OnTimeout != nullptr) OnTimeout(*this);
+			if (_cbi != nullptr) _cbi->timeout();
 			break;
 		}
 		if (_status == RECEIVING_DATA)
@@ -50,13 +47,13 @@ void AsyncSerial::Receive(int timeOut)
 					if (newData == (byte)EOIChar) {
 						_status = MESSAGE_RECEIVED;
 						_buffer[_bufferIndex] = 0;
-						if (OnReceivedOk != nullptr) OnReceivedOk(*this); // call service function to handle payload
+						if (_cbi != nullptr) _cbi->complete(); // call service function to handle payload
 						break;
 					}
 					else {
 						if (_bufferIndex >= _bufferLength) {
 							_status = DATA_OVERFLOW;
-							if (OnOverflow != nullptr) OnOverflow(*this);
+							if (_cbi != nullptr) _cbi->overflow();
 							break;
 						}
 						else {
