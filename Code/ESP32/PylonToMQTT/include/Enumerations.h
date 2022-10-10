@@ -51,7 +51,7 @@ enum CommandInformation : byte
     AnalogValueFixedPoint = 0x42,
     AlarmInfo = 0x44,
     SystemParameterFixedPoint = 0x47,
-    ProtocolVersion = 0x4f,
+    ProtocolVersion = 0x4F,
     ManufacturerInfo = 0x51,
     GetPackCount = 0x90,
     GetChargeDischargeManagementInfo = 0x92,
@@ -59,8 +59,9 @@ enum CommandInformation : byte
     FirmwareInfo = 0x96,
     RemainingCapacity = 0xA6,
     BMSTime = 0xB1,
-    GetVersionInfo = 0xc1,
-    GetBarCode = 0xc2,
+    GetVersionInfo = 0xC1,
+    GetBarCode = 0xC2,
+    GetCellOV = 0xD1,
     StartCurrent = 0xED,
 };
 

@@ -194,7 +194,7 @@ int Pylon::ParseResponse(char *szResponse, size_t readNow, CommandInformation cm
 					}
 				}
 				JsonObject entry = _root.createNestedObject("PackCurrent");
-				entry["Reading"] = (toShort(index, v))/1000.0;
+				entry["Reading"] = ((int16_t)toShort(index, v))/1000.0;
 				entry["State"] = 0;  // default to ok
 				entry = _root.createNestedObject("PackVoltage");
 				entry["Reading"] = (toShort(index, v))/1000.0;
@@ -278,7 +278,6 @@ int Pylon::ParseResponse(char *szResponse, size_t readNow, CommandInformation cm
 				sso["Discharge-MOS"] = CheckBit(SystemSts, 2);
 				sso["Charge-MOS"] = CheckBit(SystemSts, 1);
 				sso["Charge-Limit"] = CheckBit(SystemSts, 0);
-				sso["Heater"] = CheckBit(SystemSts, 7);
 				
 				JsonObject fso = _root.createNestedObject("Fault Status");
 				fso["Heater Fault"] = CheckBit(FaultSts, 7);
