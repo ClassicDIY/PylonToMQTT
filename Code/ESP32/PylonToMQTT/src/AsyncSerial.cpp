@@ -3,6 +3,9 @@
 
 #define BufferSize 2048
 
+namespace PylonToMQTT
+{
+
 AsyncSerial::AsyncSerial()
 {
 	_status = IDDLE;
@@ -99,3 +102,5 @@ uint16_t AsyncSerial::GetContentLength()
 {
 	return _bufferIndex;
 }
+
+} // namespace PylonToMQTT

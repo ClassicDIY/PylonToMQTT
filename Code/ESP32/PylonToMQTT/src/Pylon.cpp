@@ -5,10 +5,12 @@
 CommandInformation _commands[] = { CommandInformation::GetVersionInfo, CommandInformation::GetBarCode, CommandInformation::AnalogValueFixedPoint, CommandInformation::AlarmInfo, CommandInformation::None };
 std::string _tempKeys[] = { "CellTemp1~4", "CellTemp5~8", "CellTemp9~12", "CellTemp13~16", "MOS_T", "ENV_T"};
 
+namespace PylonToMQTT
+{
+
 Pylon::Pylon()
 {
 	_asyncSerial = new AsyncSerial();
-	_asyncSerial->begin(this, BAUDRATE, SERIAL_8N1, RXPIN, TXPIN);
 }
 
 Pylon::~Pylon()
@@ -33,7 +35,7 @@ bool Pylon::Transmit() {
 				_root.clear();
 				char buf[64];
 				sprintf(buf, "readings/pack-%d", _currentPack+1); 
-				_pcb(buf, s.c_str(), false);
+				_pcb->Publish(buf, s.c_str(), false);
 			}
 		}
 		sequenceComplete = Next();
@@ -97,7 +99,6 @@ void Pylon::send_cmd(uint8_t address, CommandInformation cmd) {
     _asyncSerial->Send(cmd, (byte*)raw_frame, strlen(raw_frame));
 }
 
-
 String Pylon::convert_ASCII(char* p){
    String ascii = "";
    String hex = p;
@@ -108,8 +109,6 @@ String Pylon::convert_ASCII(char* p){
    return ascii;
 }
 
-#define CheckBit(var,pos) ((var) & (1<<(pos))) ? true : false
-#define toShort(i, v) (v[i++]<<8) | v[i++]
 
 unsigned char parse_hex(char c)
 {
@@ -194,7 +193,7 @@ int Pylon::ParseResponse(char *szResponse, size_t readNow, CommandInformation cm
 					}
 				}
 				JsonObject entry = _root.createNestedObject("PackCurrent");
-				entry["Reading"] = ((int16_t)toShort(index, v))/1000.0;
+				entry["Reading"] = ((int16_t)toShort(index, v))/100.0;
 				entry["State"] = 0;  // default to ok
 				entry = _root.createNestedObject("PackVoltage");
 				entry["Reading"] = (toShort(index, v))/1000.0;
@@ -326,3 +325,4 @@ int Pylon::ParseResponse(char *szResponse, size_t readNow, CommandInformation cm
 	}
 	return 0;
 }
+} // namespace PylonToMQTT

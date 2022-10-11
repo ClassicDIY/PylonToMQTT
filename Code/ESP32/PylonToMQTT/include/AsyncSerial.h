@@ -1,14 +1,10 @@
 #pragma once
 #include "Arduino.h"
 #include "Enumerations.h"
+#include "AsyncSerialCallbackInterface.h"
 
-class AsyncSerialCallbackInterface
+namespace PylonToMQTT
 {
-public:
-    virtual void complete() = 0;
-	virtual void overflow() = 0;
-	virtual void timeout() = 0;
-};
 
 class AsyncSerial
 {
@@ -38,5 +34,5 @@ class AsyncSerial
 	 AsyncSerialCallbackInterface* _cbi;
 };
 
-
+} // namespace PylonToMQTT
 

@@ -3,19 +3,22 @@
 #include <ArduinoJson.h>
 #include "log.h"
 #include "Enumerations.h"
+#include "IOTCallbackInterface.h"
 #include "AsyncSerial.h"
 
+#define CheckBit(var,pos) ((var) & (1<<(pos))) ? true : false
+#define toShort(i, v) (v[i++]<<8) | v[i++]
 
+namespace PylonToMQTT
+{
 
 class Pylon : public AsyncSerialCallbackInterface
 {
     
-    typedef void(*PublishCallback)(const char *subtopic, const char *value, boolean retained);
-
- public:
+public:
 	Pylon();
     ~Pylon();
-    void begin(PublishCallback pcb) { _pcb = pcb; };
+    void begin(IOTCallbackInterface* pcb) { _pcb = pcb; _asyncSerial->begin(this, BAUDRATE, SERIAL_8N1, RXPIN, TXPIN);};
     void Receive(int timeOut) { _asyncSerial->Receive(timeOut); };
     bool Transmit();
     int ParseResponse(char *szResponse, size_t readNow, CommandInformation cmd);
@@ -38,7 +41,7 @@ class Pylon : public AsyncSerialCallbackInterface
     uint8_t _numberOfPacks = 0;
     uint8_t _currentPack = 0;
     AsyncSerial* _asyncSerial;
-    PublishCallback _pcb;
+    IOTCallbackInterface* _pcb;
     CommandInformation _currentCommand = CommandInformation::None;
 
     uint16_t get_frame_checksum(char* frame);
@@ -49,3 +52,4 @@ class Pylon : public AsyncSerialCallbackInterface
     void send_cmd(uint8_t address, CommandInformation cmd);
 
 };
+} // namespace PylonToMQTT
