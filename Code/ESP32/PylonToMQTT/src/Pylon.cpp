@@ -34,7 +34,7 @@ bool Pylon::Transmit() {
 				serializeJson(_root, s);
 				_root.clear();
 				char buf[64];
-				sprintf(buf, "readings/pack-%d", _currentPack+1); 
+				sprintf(buf, "readings/Pack%d", _currentPack+1); 
 				_pcb->Publish(buf, s.c_str(), false);
 			}
 		}
@@ -319,6 +319,7 @@ int Pylon::ParseResponse(char *szResponse, size_t readNow, CommandInformation cm
                 _numberOfPacks > 8 ? 1 : _numberOfPacks; // max 8, default to 1
 				_root.clear();
 				logi("GetPackCount: %d", _numberOfPacks);
+				_pcb->PublishDiscovery(_numberOfPacks);
 			}
 			break;
 		}

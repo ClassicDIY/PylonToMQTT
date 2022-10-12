@@ -20,6 +20,7 @@ char _publishRateStr[NUMBER_CONFIG_LEN];
 char _willTopic[64];
 char _rootTopicPrefix[64];
 
+
 iotwebconf::ParameterGroup Battery_group = iotwebconf::ParameterGroup("BatteryGroup", "Battery");
 iotwebconf::TextParameter bankNameParam = iotwebconf::TextParameter("Battery Bank Name", "Bank1", _bankName, IOTWEBCONF_WORD_LEN);
 iotwebconf::ParameterGroup MQTT_group = iotwebconf::ParameterGroup("MQTT", "MQTT");
@@ -35,8 +36,7 @@ void onMqttConnect(bool sessionPresent)
 	char buf[64];
 	sprintf(buf, "%s/cmnd/#", _rootTopicPrefix);
 	_mqttClient.subscribe(buf, 0);
-	_mqttClient.publish(_willTopic, 0, false, "Online");
-	_iot.PublishDiscovery();
+	_mqttClient.publish(_willTopic, 0, true, "online", 6);
 	logi("Subscribed to [%s], qos: 0", buf);
 }
 
@@ -51,7 +51,6 @@ void onMqttDisconnect(AsyncMqttClientDisconnectReason reason)
 
 void connectToMqtt()
 {
-	logi("Connecting to MQTT...");
 	if (WiFi.isConnected())
 	{
 		if (strlen(_mqttServer) > 0) // mqtt configured
@@ -66,7 +65,7 @@ void connectToMqtt()
 			strcat(_rootTopicPrefix, _bankName);
 
 			sprintf(_willTopic, "%s/tele/LWT", _rootTopicPrefix);
-			_mqttClient.setWill(_willTopic, 0, true, "Offline");
+			_mqttClient.setWill(_willTopic, 0, true, "offline");
 			_mqttClient.connect();
 			logd("rootTopicPrefix: %s", _rootTopicPrefix);
 		}
@@ -271,7 +270,12 @@ void IOT::Init()
 			_mqttClient.setCredentials(_mqttUserName, _mqttUserPassword);
 		}
 	}
-
+	// generate unique id from mac address NIC segment
+	uint8_t chipid[6];
+	esp_efuse_mac_get_default(chipid);
+	_uniqueId = chipid[3] << 16;
+	_uniqueId += chipid[4] << 8;
+	_uniqueId += chipid[5];
 	// IotWebConfParameter* p = _iotWebConf.getApPasswordParameter();
 	// logi("AP Password: %s", p->valueBuffer);
 	// Set up required URL handlers on the web server.
@@ -359,45 +363,64 @@ void IOT::Publish(const char *topic, float value, boolean retained)
 }
 
 
-void IOT::PublishDiscovery()
+void IOT::PublishDiscovery(int numberOfPacks)
 {
-	// char buffer[STR_LEN];
-	// StaticJsonDocument<1024> doc; // MQTT discovery
-	// doc["name"] = _iotWebConf.getThingName();
-	// sprintf(buffer, "%X", _uniqueId);
-	// doc["unique_id"] = buffer;
-	// doc["mode_cmd_t"] = "~/cmnd/MODE";
-	// doc["mode_stat_t"] = "~/stat/MODE";
-	// doc["avty_t"] = "~/tele/LWT";
-	// doc["pl_avail"] = "Online";
-	// doc["pl_not_avail"] = "Offline";
-	// doc["temp_cmd_t"] = "~/cmnd/TEMPERATURE";
-	// doc["temp_stat_t"] = "~/stat/SET_TEMPERATURE";
-	// doc["curr_temp_t"] = "~/stat/CURRENT_TEMPERATURE";
-	// doc["action_topic"] = "~/stat/ACTION";
-	// doc["min_temp"] = MIN_TEMPERATURE;
-	// doc["max_temp"] = MAX_TEMPERATURE;
-	// doc["temp_step"] = TEMP_PRECISION;
-	// JsonArray array = doc.createNestedArray("modes");
-	// array.add("off");
-	// array.add("heat");
-	// JsonObject device = doc.createNestedObject("device");
-	// device["name"] = _iotWebConf.getThingName();
-	// device["sw_version"] = CONFIG_VERSION;
-	// device["manufacturer"] = "SkyeTracker";
-	// sprintf(buffer, "ESP32-Bit (%X)", _uniqueId);
-	// device["model"] = buffer;
-	// JsonArray identifiers = device.createNestedArray("identifiers");
-	// identifiers.add(_uniqueId);
-	// doc["~"] = _mqttRootTopic;
-	// String s;
-	// serializeJson(doc, s);
-	// char configurationTopic[64];
-	// sprintf(configurationTopic, "%s/climate/%X/config", HOME_ASSISTANT_PREFIX, _uniqueId);
-	// if (_mqttClient.publish(configurationTopic, 0, true, s.c_str(), s.length()) == 0)
-	// {
-	// 	loge("**** Configuration payload exceeds MAX MQTT Packet Size");
-	// }
+	for (int i = 0; i < numberOfPacks; i++) {
+		char pack[STR_LEN];
+		sprintf(pack, "Pack%d", i+1);
+		PublishDiscoverySub("voltage", "V", "PackVoltage", "Reading", pack);
+		PublishDiscoverySub("energy", "Ah", "RemainingCapacity", "", pack);
+		PublishDiscoverySub("battery", "%", "SOC", "", pack);
+		PublishDiscoverySub("current", "A", "PackCurrent", "Reading", pack);
+	}
+}
+
+
+void IOT::PublishDiscoverySub(const char *device_class, const char *unit_of_meas, const char *entity, const char *item, const char *pack)
+{
+	char buffer[STR_LEN];
+	StaticJsonDocument<1024> doc; // MQTT discovery
+	doc["device_class"] = device_class;
+	doc["unit_of_measurement"] = unit_of_meas;
+	doc["state_class"] = "measurement";
+
+	sprintf(buffer, "%s %s", pack, entity);
+	doc["name"] = buffer;
+
+	sprintf(buffer, "%s/stat/readings/%s", _rootTopicPrefix, pack);
+	doc["state_topic"] = buffer;
+
+	sprintf(buffer, "%X_%s_%s", _uniqueId, pack, entity);
+	doc["unique_id"] = buffer;
+	String object_id = buffer;
+
+	if (strlen(item) == 0) {
+		sprintf(buffer, "{{ value_json.%s }}", entity);
+	}
+	else {
+		sprintf(buffer, "{{ value_json.%s.%s }}", entity, item);
+	}
+	doc["value_template"] = buffer;
+
+	sprintf(buffer, "%s/tele/LWT", _rootTopicPrefix);
+	doc["availability_topic"] = buffer;
+
+	JsonObject device = doc.createNestedObject("device");
+	device["name"] = _iotWebConf.getThingName();
+	device["sw_version"] = CONFIG_VERSION;
+	device["manufacturer"] = "ClassicDIY";
+	device["model"] = "ESP32";
+
+	sprintf(buffer, "%X", _uniqueId);
+	device["identifiers"] = buffer;
+
+	String s;
+	serializeJson(doc, s);
+	sprintf(buffer, "%s/sensor/%s/config", HOME_ASSISTANT_PREFIX, object_id.c_str());
+	if (_mqttClient.publish(buffer, 0, true, s.c_str(), s.length()) == 0)
+	{
+		loge("**** Configuration payload exceeds MAX MQTT Packet Size");
+	}
 }
 
 } // namespace PylonToMQTT
