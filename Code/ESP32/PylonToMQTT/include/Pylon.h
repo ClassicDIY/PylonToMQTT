@@ -5,9 +5,8 @@
 #include "Enumerations.h"
 #include "IOTCallbackInterface.h"
 #include "AsyncSerial.h"
-
-#define CheckBit(var,pos) ((var) & (1<<(pos))) ? true : false
-#define toShort(i, v) (v[i++]<<8) | v[i++]
+#include "Pack.h"
+#include "Defines.h"
 
 namespace PylonToMQTT
 {
@@ -51,5 +50,8 @@ public:
     int parseValue(char** pp, int l);
     void send_cmd(uint8_t address, CommandInformation cmd);
 
+private:
+    std::vector<Pack> _Packs;
+    std::vector<string> _TempKeys;
 };
 } // namespace PylonToMQTT

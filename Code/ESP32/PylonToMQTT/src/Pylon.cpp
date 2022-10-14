@@ -2,15 +2,14 @@
 #include "Pylon.h"
 #include "Log.h"
 
-CommandInformation _commands[] = { CommandInformation::GetVersionInfo, CommandInformation::GetBarCode, CommandInformation::AnalogValueFixedPoint, CommandInformation::AlarmInfo, CommandInformation::None };
-std::string _tempKeys[] = { "CellTemp1~4", "CellTemp5~8", "CellTemp9~12", "CellTemp13~16", "MOS_T", "ENV_T"};
-
 namespace PylonToMQTT
 {
+CommandInformation _commands[] = { CommandInformation::GetVersionInfo, CommandInformation::GetBarCode, CommandInformation::AnalogValueFixedPoint, CommandInformation::AlarmInfo, CommandInformation::None };
 
 Pylon::Pylon()
 {
 	_asyncSerial = new AsyncSerial();
+	_TempKeys = { "CellTemp1_4", "CellTemp5_8", "CellTemp9_12", "CellTemp13_16", "MOS_T", "ENV_T"};
 }
 
 Pylon::~Pylon()
@@ -178,7 +177,7 @@ int Pylon::ParseResponse(char *szResponse, size_t readNow, CommandInformation cm
 				char key[16];
 				uint16_t numberOfCells = v[index++];
 				for (int i = 0; i < numberOfCells; i++) {
-					sprintf(key, "Cell-%d", i+1);
+					sprintf(key, "Cell_%d", i+1);
 					JsonObject cell = cells.createNestedObject(key);
 					cell["Reading"] = (toShort(index, v))/1000.0;
 					cell["State"] = 0xF0;
@@ -186,11 +185,17 @@ int Pylon::ParseResponse(char *szResponse, size_t readNow, CommandInformation cm
 				JsonObject temps = _root.createNestedObject("Temps");
 				uint16_t numberOfTemps = v[index++];
 				for (int i = 0; i < numberOfTemps; i++) {
-					if ( i < _tempKeys->length()) {
-						JsonObject entry = temps.createNestedObject(_tempKeys[i]);
+					if ( i < _TempKeys.size()) {
+						JsonObject entry = temps.createNestedObject(_TempKeys[i]);
 						entry["Reading"] = (toShort(index, v))/100.0;
 						entry["State"] = 0;  // default to ok
 					}
+				}
+				int packIndex = ADR - 1;
+				if (packIndex < _Packs.size()) {
+					_Packs[packIndex].setNumberOfCells(numberOfCells);
+					_Packs[packIndex].setNumberOfTemps(numberOfTemps);
+					_Packs[packIndex].PublishDiscovery(); // PublishDiscovery if ready and not already published
 				}
 				JsonObject entry = _root.createNestedObject("PackCurrent");
 				entry["Reading"] = ((int16_t)toShort(index, v))/100.0;
@@ -214,6 +219,10 @@ int Pylon::ParseResponse(char *szResponse, size_t readNow, CommandInformation cm
 				std::string s(v.begin(), v.end());
 				ver = s.substr(index);
 				_root["Version"] = ver;
+				int packIndex = ADR - 1;
+				if (packIndex < _Packs.size()) {
+					_Packs[packIndex].setVersionInfo(ver);
+				}
 			}
 			break;
 			case CommandInformation::AlarmInfo: {
@@ -234,8 +243,8 @@ int Pylon::ParseResponse(char *szResponse, size_t readNow, CommandInformation cm
 				JsonObject temps = _root.getMember("Temps");
 				uint16_t numberOfTemps = v[index++];
 				for (int i = 0; i < numberOfTemps; i++) {
-					if ( i < _tempKeys->length()) {
-						JsonObject entry = temps.getMember(_tempKeys[i]);
+					if ( i < _TempKeys.size()) {
+						JsonObject entry = temps.getMember(_TempKeys[i]);
 						entry["State"] = v[index++]; 
 					}
 				}
@@ -306,11 +315,16 @@ int Pylon::ParseResponse(char *szResponse, size_t readNow, CommandInformation cm
 			}
 			break;
 			case CommandInformation::GetBarCode: {
-				logi("GetBarCode");
+				
+				logi("GetBarCode for %d", ADR);
 				std::string bc;
 				std::string s(v.begin(), v.end()-2);
 				bc = s.substr(index);
 				_root["BarCode"] = bc;
+				int packIndex = ADR - 1;
+				if (packIndex < _Packs.size()) {
+					_Packs[packIndex].setBarcode(bc);
+				}
 			}
 			break;
 			case CommandInformation::GetPackCount:
@@ -319,11 +333,16 @@ int Pylon::ParseResponse(char *szResponse, size_t readNow, CommandInformation cm
                 _numberOfPacks > 8 ? 1 : _numberOfPacks; // max 8, default to 1
 				_root.clear();
 				logi("GetPackCount: %d", _numberOfPacks);
-				_pcb->PublishDiscovery(_numberOfPacks);
+				for (int i = 0; i < _numberOfPacks; i++) {
+					char packName[STR_LEN];
+					sprintf(packName, "Pack%d", i+1);
+					_Packs.push_back(Pack(packName, &_TempKeys, _pcb));
+				}
 			}
 			break;
 		}
 	}
 	return 0;
 }
+
 } // namespace PylonToMQTT

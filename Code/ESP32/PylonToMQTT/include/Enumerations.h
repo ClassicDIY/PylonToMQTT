@@ -36,6 +36,10 @@
 
 // };
 
+
+namespace PylonToMQTT
+{
+
 typedef enum
 {
     IDDLE,
@@ -77,3 +81,5 @@ enum ResponseCode
     ADR_error = 0x90,
     CID2Communicationinvalid_error = 0x91
 };
+
+} // namespace PylonToMQTT

@@ -10,7 +10,6 @@ DNSServer _dnsServer;
 WebServer _webServer(80);
 HTTPUpdateServer _httpUpdater;
 IotWebConf _iotWebConf(TAG, &_dnsServer, &_webServer, TAG, CONFIG_VERSION);
-
 char _bankName[IOTWEBCONF_WORD_LEN];
 char _mqttServer[IOTWEBCONF_WORD_LEN];
 char _mqttPort[NUMBER_CONFIG_LEN];
@@ -19,8 +18,6 @@ char _mqttUserPassword[IOTWEBCONF_WORD_LEN];
 char _publishRateStr[NUMBER_CONFIG_LEN];
 char _willTopic[64];
 char _rootTopicPrefix[64];
-
-
 iotwebconf::ParameterGroup Battery_group = iotwebconf::ParameterGroup("BatteryGroup", "Battery");
 iotwebconf::TextParameter bankNameParam = iotwebconf::TextParameter("Battery Bank Name", "Bank1", _bankName, IOTWEBCONF_WORD_LEN);
 iotwebconf::ParameterGroup MQTT_group = iotwebconf::ParameterGroup("MQTT", "MQTT");
@@ -362,65 +359,23 @@ void IOT::Publish(const char *topic, float value, boolean retained)
 	Publish(topic, buf, retained);
 }
 
-
-void IOT::PublishDiscovery(int numberOfPacks)
-{
-	for (int i = 0; i < numberOfPacks; i++) {
-		char pack[STR_LEN];
-		sprintf(pack, "Pack%d", i+1);
-		PublishDiscoverySub("voltage", "V", "PackVoltage", "Reading", pack);
-		PublishDiscoverySub("energy", "Ah", "RemainingCapacity", "", pack);
-		PublishDiscoverySub("battery", "%", "SOC", "", pack);
-		PublishDiscoverySub("current", "A", "PackCurrent", "Reading", pack);
-	}
-}
-
-
-void IOT::PublishDiscoverySub(const char *device_class, const char *unit_of_meas, const char *entity, const char *item, const char *pack)
-{
-	char buffer[STR_LEN];
-	StaticJsonDocument<1024> doc; // MQTT discovery
-	doc["device_class"] = device_class;
-	doc["unit_of_measurement"] = unit_of_meas;
-	doc["state_class"] = "measurement";
-
-	sprintf(buffer, "%s %s", pack, entity);
-	doc["name"] = buffer;
-
-	sprintf(buffer, "%s/stat/readings/%s", _rootTopicPrefix, pack);
-	doc["state_topic"] = buffer;
-
-	sprintf(buffer, "%X_%s_%s", _uniqueId, pack, entity);
-	doc["unique_id"] = buffer;
-	String object_id = buffer;
-
-	if (strlen(item) == 0) {
-		sprintf(buffer, "{{ value_json.%s }}", entity);
-	}
-	else {
-		sprintf(buffer, "{{ value_json.%s.%s }}", entity, item);
-	}
-	doc["value_template"] = buffer;
-
-	sprintf(buffer, "%s/tele/LWT", _rootTopicPrefix);
-	doc["availability_topic"] = buffer;
-
-	JsonObject device = doc.createNestedObject("device");
-	device["name"] = _iotWebConf.getThingName();
-	device["sw_version"] = CONFIG_VERSION;
-	device["manufacturer"] = "ClassicDIY";
-	device["model"] = "ESP32";
-
-	sprintf(buffer, "%X", _uniqueId);
-	device["identifiers"] = buffer;
-
+void IOT::PublishMessage(const char* topic, JsonDocument& payload) {
 	String s;
-	serializeJson(doc, s);
-	sprintf(buffer, "%s/sensor/%s/config", HOME_ASSISTANT_PREFIX, object_id.c_str());
-	if (_mqttClient.publish(buffer, 0, true, s.c_str(), s.length()) == 0)
+	serializeJson(payload, s);
+	if (_mqttClient.publish(topic, 0, true, s.c_str(), s.length()) == 0)
 	{
 		loge("**** Configuration payload exceeds MAX MQTT Packet Size");
 	}
+}
+
+std::string IOT::getRootTopicPrefix() {
+	std::string s(_rootTopicPrefix); 
+	return s; 
+};
+
+std::string IOT::getThingName() {
+	 std::string s(_iotWebConf.getThingName());
+	  return s;
 }
 
 } // namespace PylonToMQTT
