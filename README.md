@@ -10,14 +10,16 @@
 [![GitHub issues](https://img.shields.io/github/issues-raw/ClassicDIY/ClassicMQTT.svg?style=for-the-badge)](https://github.com/ClassicDIY/ClassicMQTT/issues)
 -->
 
-<img src="./Pictures/WIP.jpg" width="128"/>
-
 <img src="./Pictures/PylonToMQTT.png" width="1024"/>
 
 <p>
 The PylonToMQTT publisher will read data from your Jakiper Battery Bank using the Pylontech protocol via the RS232 console port and publish the data to a MQTT broker. This allows you to integrate other MQTT subscriber applications like HomeAssistant, NodeRed, InfluxDB and Grafana.
 
 The software is provided "AS IS", WITHOUT WARRANTY OF ANY KIND, express or implied.
+</p>
+
+<p>
+Please refer to the <a href="https://github.com/ClassicDIY/PylonToMQTT/wiki">PylonToMQTT wiki</a> for more information.
 </p>
 
 ## License
