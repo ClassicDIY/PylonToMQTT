@@ -12,7 +12,7 @@
 
 <img src="./Pictures/WIP.jpg" width="256"/>
 
-<img src="./Pictures/Jakiper.png" width="512"/>
+<img src="./Pictures/PylonToMQTT.png" width="512"/>
 
 
 ## License
