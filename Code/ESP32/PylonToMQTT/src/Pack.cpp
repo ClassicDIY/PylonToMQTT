@@ -70,11 +70,11 @@ void Pack::PublishDiscoverySub(const char *component, const char *entity, const 
 	JsonObject device = doc.createNestedObject("device");
 	device["name"] = Name();
 	device["via_device"] = _pcb->getThingName();
-	device["hw_version"] = getBarcode();
+	device["hw_version"] = _barCode.substr(0, 15);
 	device["sw_version"] = CONFIG_VERSION;
 	device["manufacturer"] = "ClassicDIY";
-	device["model"] = _versionInfo;
-	sprintf(buffer, "%s_%s", Name().c_str(), getBarcode().c_str());
+	device["model"] = _versionInfo.substr(0, 19);
+	sprintf(buffer, "%s_%s", Name().c_str(), _barCode.substr(0, 15).c_str());
 	device["identifiers"] = buffer;
 	sprintf(buffer, "%s/%s/%s/config", HOME_ASSISTANT_PREFIX, component, object_id.c_str());
 	_pcb->PublishMessage(buffer, doc);

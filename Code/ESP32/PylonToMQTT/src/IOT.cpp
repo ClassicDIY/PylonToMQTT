@@ -164,9 +164,14 @@ void handleRoot()
 	s += _mqttUserName;
 	s += "</ul>";
 	s += "<ul>";
-	s += "<li>Publish Rate : ";
+	s += "<li>Publish Rate: ";
 	s += _publishRateStr;
 	s += " (S)</ul>";
+	s += "</ul>";
+	s += "<ul>";
+	s += "<li>Rack Name: ";
+	s += _bankName;
+	s += "</ul>";
 	s += "Go to <a href='config'>configure page</a> to change values.";
 	s += "</body></html>\n";
 	_webServer.send(200, "text/html", s);

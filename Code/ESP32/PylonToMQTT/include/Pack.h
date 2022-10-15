@@ -18,9 +18,6 @@ class Pack {
     void setBarcode(const std::string& bc) {
       _barCode = bc;
     }
-    std::string getBarcode() {
-      return _barCode;
-    }
 
     void setVersionInfo(const std::string& ver) {
       _versionInfo = ver;

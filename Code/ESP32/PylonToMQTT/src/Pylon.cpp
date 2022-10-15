@@ -218,7 +218,7 @@ int Pylon::ParseResponse(char *szResponse, size_t readNow, CommandInformation cm
 				std::string ver;
 				std::string s(v.begin(), v.end());
 				ver = s.substr(index);
-				_root["Version"] = ver;
+				_root["Version"] = ver.substr(0, 19);
 				int packIndex = ADR - 1;
 				if (packIndex < _Packs.size()) {
 					_Packs[packIndex].setVersionInfo(ver);
@@ -316,11 +316,12 @@ int Pylon::ParseResponse(char *szResponse, size_t readNow, CommandInformation cm
 			break;
 			case CommandInformation::GetBarCode: {
 				
-				logi("GetBarCode for %d", ADR);
+				
 				std::string bc;
 				std::string s(v.begin(), v.end()-2);
 				bc = s.substr(index);
-				_root["BarCode"] = bc;
+				logi("GetBarCode for %d bc: %s", ADR, bc.c_str());
+				_root["BarCode"] = bc.substr(0, 15);
 				int packIndex = ADR - 1;
 				if (packIndex < _Packs.size()) {
 					_Packs[packIndex].setBarcode(bc);
