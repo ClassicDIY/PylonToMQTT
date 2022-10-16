@@ -187,7 +187,8 @@ int Pylon::ParseResponse(char *szResponse, size_t readNow, CommandInformation cm
 				for (int i = 0; i < numberOfTemps; i++) {
 					if ( i < _TempKeys.size()) {
 						JsonObject entry = temps.createNestedObject(_TempKeys[i]);
-						entry["Reading"] = (toShort(index, v))/100.0;
+						float kelvin = (toShort(index, v)) - 2730.0;// use 273.0 instead of 273.15 to match jakiper app
+						entry["Reading"] = round(kelvin)/10.0; // limit to one decimal place
 						entry["State"] = 0;  // default to ok
 					}
 				}
