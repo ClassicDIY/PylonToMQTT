@@ -1,0 +1,17 @@
+services:
+  classic_mqtt:
+    container_name: classic_mqtt
+    image: classicdiy/classicmqtt
+    restart: unless-stopped
+    environment:
+      - LOGLEVEL=DEBUG
+      - CLASSIC=192.168.86.18
+      - CLASSIC_PORT=502
+      - CLASSIC_NAME=MyWorkshop
+      - MQTT_HOST=mosquitto
+      - MQTT_PORT=1883
+      - MQTT_ROOT=ClassicMQTT
+ #     - MQTT_USER=ClassicPublisher
+ #     - MQTT_PASS=ClassicPub123
+
+
