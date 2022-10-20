@@ -6,10 +6,11 @@ import threading
 import logging
 import os
 import sys
+import numpy
 from random import randint, seed
 from enum import Enum
 
-from support.pylon_jsonencoder import encodePylonData_readings
+from support.pylon_jsonencoder import encodePylon_readings, encodePylon_info
 from support.pylon_validate import handleArgs
 from support.pylontech import Pylontech
 from time import time_ns
@@ -46,11 +47,16 @@ doStop                      = False
 mqttErrorCount              = 0
 currentPollRate             = DEFAULT_WAKE_RATE
 mqttClient                  = None
+number_of_packs             = 0 
+current_pack                = 0
+info_published              = None
+
+p = Pylontech()
 
 # --------------------------------------------------------------------------- # 
 # configure the logging
 # --------------------------------------------------------------------------- # 
-log = logging.getLogger(__name__)
+log = logging.getLogger("PylonToMQTT")
 if not log.handlers:
     handler = logging.StreamHandler(sys.stdout)
     formatter = logging.Formatter('%(asctime)s:%(levelname)s:%(name)s:%(message)s')
@@ -150,32 +156,42 @@ def mqttPublish(client, data, subtopic):
 # Periodic will be called when needed.
 # If so, it will read from serial and publish to MQTT
 # --------------------------------------------------------------------------- # 
-def periodic(modbus_stop):    
+def periodic(polling_stop):    
 
-    global mqttClient, infoPublished, mqttErrorCount, currentPollRate
+    global mqttClient, infoPublished, mqttErrorCount, currentPollRate, number_of_packs, current_pack, info_published
 
-    if not modbus_stop.is_set():
+    if not polling_stop.is_set():
         #Get the current time as a float of seconds.
         beforeTime = time_ns() /  1000000000.0
 
         try:
             if mqttConnected:
                 data = {}
-                # todo
-                #Get the Modbus Data and store it.
-                # data = getModbusData(modeAwake, argumentValues['pylonHost'], argumentValues['pylonPort'])
-                if data: # got data
-                    if mqttPublish(mqttClient, encodePylonData_readings(data),"readings") == False:
-                        # if (not infoPublished): #Check if the Info has been published yet
-                        #     if mqttPublish(mqttClient, encodePylonData_readings(data),"info"):
-                        #         infoPublished = True                        
-                        #     else:
-                        #         mqttErrorCount += 1
-                    # else:
-                        mqttErrorCount += 1
-
-                else:
-                    log.error("PYLON data not good, skipping publish")
+                if number_of_packs == 0:
+                    number_of_packs = p.get_pack_count().PackCount
+                    log.debug("Pack count: {}".format(number_of_packs))
+                    current_pack = 0
+                    info_published = numpy.full(int(number_of_packs), False)
+                    
+                else :
+                    if not info_published[current_pack]:
+                        vi = p.get_version_info(current_pack)
+                        log.debug("version_info: {}".format(vi.Version))
+                        if vi:
+                            bc = p.get_barcode(current_pack)
+                            log.debug("barcode: {}".format(bc.Barcode))
+                            if bc:
+                                mqttPublish(mqttClient, encodePylon_info(vi, bc),"info.Pack{}".format(current_pack+1))
+                                info_published[current_pack] = True
+                    ai = p.get_alarm_info(current_pack)
+                    # log.debug("get_alarm_info: {}".format(ai))
+                    pylonData = p.get_values_single(current_pack)
+                    if pylonData: # got data
+                        mqttPublish(mqttClient, encodePylon_readings(pylonData, ai),"readings.Pack{}".format(current_pack+1))
+                        current_pack += 1
+                        current_pack %= number_of_packs
+                    else:
+                        log.error("PYLON data not good, skipping publish")
 
         except Exception as e:
             log.error("Caught Error in periodic")
@@ -192,7 +208,7 @@ def periodic(modbus_stop):
 
         #log.debug("Next Interval: {}".format(timeUntilNextInterval))
         # set myself to be called again in correct number of seconds
-        threading.Timer(timeUntilNextInterval, periodic, [modbus_stop]).start()
+        threading.Timer(timeUntilNextInterval, periodic, [polling_stop]).start()
 
 # --------------------------------------------------------------------------- # 
 # Main
@@ -264,6 +280,5 @@ def run(argv):
     log.info("Exiting pylon_mqtt")
 
 if __name__ == '__main__':
-    p = Pylontech()
-    log.debug(p.get_values_single(2))
+    number_of_packs  = 0
     run(sys.argv[1:])

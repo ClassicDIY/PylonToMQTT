@@ -5,7 +5,7 @@ import os
 import re
 
 
-log = logging.getLogger('pylon_mqtt')
+log = logging.getLogger("PylonToMQTT")
 
 def validateStrParameter(param, name, defaultValue):
     if isinstance(param, str): 
