@@ -29,8 +29,8 @@ MAIN_LOOP_SLEEP_SECS        = 5         #Seconds to sleep in the main loop
 # --------------------------------------------------------------------------- # 
 argumentValues = { \
     'pylonPort':os.getenv('PYLON_PORT', "/dev/ttyUSB0"), \
-    'rackName':os.getenv('RACK_NAME', "Test"), \
-    'mqttHost':os.getenv('MQTT_HOST', "192.168.86.23"), \
+    'rackName':os.getenv('RACK_NAME', "Main"), \
+    'mqttHost':os.getenv('MQTT_HOST', "mosquitto"), \
     'mqttPort':os.getenv('MQTT_PORT', "1883"), \
     'mqttRoot':os.getenv('MQTT_ROOT', "PylonToMQTT"), \
     'mqttUser':os.getenv('MQTT_USER', ""), \

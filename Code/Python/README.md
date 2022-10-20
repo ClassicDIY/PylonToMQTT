@@ -1,18 +1,15 @@
 
-# Classic Monitor MQTT Publisher Python Implementation
+# Pylontech MQTT Publisher Python Implementation
 
-The code in this repository will read data from your Midnite Classic over the TCP based MODBUS interface and publish it to an MQTT broker. It is a read-only program with respect to the Solar Controller, it does not write any data to Classic. It is intended to be used with the Classic Monitor tool developed by Graham, but can also be used to make the data from your Midnite Classic available for other purposes by simply connecting the the MQTT broker and subscribing to the proper subjects.  
+The code in this repository will read data from your Jakiper Battery console interface and publish it to an MQTT broker. It is a read-only program with respect to the battery BMS, it does not write any data to BMS. It is intended to be used with InfluxDb and Grafana.  
 
 The software is provided "AS IS", WITHOUT WARRANTY OF ANY KIND, express or implied.
-Classic Monitor is NOT a product of Midnite solar, nor do they support this application!
 
-version 1.0.2
-As the name implies, this tool is implemented in Python and is meant to run on a computer system that can reach your Midnite Classic Solar MPPT Controller and an MQTT broker over a network. Once launched, the program will periodically connect to the Classic using TCP based MODBUS then upload that data to an MQTT broker where it is available for subscription from other programs or apps. An example installation would be a Raspberry Pi running on the local network with the Classic and pushing the data to either a local MQTT broker or one the internet. 
 
 ## **Get It**
 
 1. Copy this repository (if you understand git, you can get it that way too)  
-    `wget https://github.com/ClassicDIY/ClassicMQTT/archive/master.zip`
+    `wget https://github.com/ClassicDIY/PylonToMQTT/tree/main/Code/Python`
 2. Extract the zip file:  
     `unzip master.zip`
 3. Change directory  

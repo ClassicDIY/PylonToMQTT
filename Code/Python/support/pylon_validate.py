@@ -56,13 +56,13 @@ def validateIntParameter(param, name, defaultValue):
 # --------------------------------------------------------------------------- # 
 def handleArgs(argv,argVals):
     
-    from PylonToMQTT import MAX_PUBLISH_RATE, MIN_PUBLISH_RATE
+    from pylon_to_mqtt import MAX_PUBLISH_RATE, MIN_PUBLISH_RATE
     
     try:
       opts, args = getopt.getopt(argv,"h",
                     ["pylon_port=",
                      "rack_name=",
-                     "mqtt=",
+                     "mqtt_host=",
                      "mqtt_port=",
                      "mqtt_root=",
                      "mqtt_user=",
@@ -81,7 +81,7 @@ def handleArgs(argv,argVals):
             argVals['pylonPort'] = validateStrParameter(arg,"pylon_port", argVals['pylonPort'])
         elif opt in ('--rackName'):
             argVals['rackName'] = validateStrParameter(arg,"rack_name", argVals['rackName'])
-        elif opt in ("--mqtt"):
+        elif opt in ("--mqtt_host"):
             argVals['mqttHost'] = validateHostnameParameter(arg,"mqtt_host",argVals['mqttHost'])
         elif opt in ("--mqtt_port"):
             argVals['mqttPort'] = validateIntParameter(arg,"mqtt_port", argVals['mqttPort'])
