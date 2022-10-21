@@ -1,0 +1,59 @@
+version: "3"
+services:
+  mosquitto:
+    image: eclipse-mosquitto
+    hostname: mosquitto
+    container_name: mosquitto
+    restart: unless-stopped
+    expose:
+      - "1883"
+      - "9001"
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./mosquitto/mosquitto.passwd:/mosquitto/config/mosquitto.passwd
+    networks:
+      - localnet
+
+
+  pylon_to_mqtt:
+    container_name: pylon_to_mqtt
+    image: pylon_to_mqtt
+    restart: unless-stopped
+    build: .
+    environment:
+      - LOGLEVEL=DEBUG
+      - PYLON_PORT=/dev/ttyUSB0
+      - RACK_NAME=Main
+      - MQTT_HOST=mosquitto
+      - MQTT_PORT=1883
+      - MQTT_ROOT=PylonToMQTT
+      - MQTT_USER=ClassicPublisher
+      - MQTT_PASS=ClassicPub123
+      - PUBLISH_RATE=5
+
+    depends_on:
+      - mosquitto
+    networks:
+      - localnet
+
+    # Note you no longer need to create your own .env file. 
+    # Simply replace your particular values in the "environment" section above.
+    # Note, in the mosquitto.passwd file in the repo there are 2 users:
+    #     ClassicPublisher password = ClassicPub123
+    #     ClassicClient password= ClassicClient123
+    #
+    # After you have set the values in the environment section above, use the 
+    # following command to build and run it:
+    #    docker-compose -f classic_mqtt_compose.yml up
+    #
+    # If you change the values in this file after you use the above 
+    # docker-compose command, use this command to re-build it.
+    #    docker-compose -f classic_mqtt_compose.yml build
+    #
+
+    
+networks:
+  localnet:

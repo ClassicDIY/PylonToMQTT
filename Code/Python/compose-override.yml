@@ -1,16 +1,15 @@
 services:
-  classic_mqtt:
-    container_name: classic_mqtt
-    image: classicdiy/classicmqtt
+  pylon_to_mqtt:
+    container_name: pylon_to_mqtt
+    image: classicdiy/pylon_to_mqtt:latest
     restart: unless-stopped
     environment:
       - LOGLEVEL=DEBUG
-      - CLASSIC=192.168.86.18
-      - CLASSIC_PORT=502
-      - CLASSIC_NAME=MyWorkshop
+      - PYLON_PORT=/dev/ttyUSB0
+      - RACK_NAME=Main
       - MQTT_HOST=mosquitto
       - MQTT_PORT=1883
-      - MQTT_ROOT=ClassicMQTT
+      - MQTT_ROOT=PylonToMQTT
  #     - MQTT_USER=ClassicPublisher
  #     - MQTT_PASS=ClassicPub123
 
