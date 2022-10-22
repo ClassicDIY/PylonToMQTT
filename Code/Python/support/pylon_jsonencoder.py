@@ -15,6 +15,9 @@ log = logging.getLogger("PylonToMQTT")
 # --------------------------------------------------------------------------- # 
 # Handle creating the Json for Readings
 # --------------------------------------------------------------------------- # 
+
+_tempNames = {0 : 'CellTemp1_4', 1 : 'CellTemp5_8', 2 : 'CellTemp9_12', 3 : 'CellTemp13_16', 4 : 'MOS_T', 5 : 'ENV_T' }
+
 def encodePylon_info(vi, bc):
 
     pylonData = {}
@@ -40,8 +43,7 @@ def encodePylon_readings(decoded, ai):
         temperatureData = {}
         temperatureData["Reading"] = decoded.GroupedCellsTemperatures[t]
         temperatureData["State"] = ai.CellsTemperatureStates[t]
-        key = "CellTemp_{}"
-        temperatures[key.format(t+1)] = temperatureData
+        temperatures[_tempNames[t]] = temperatureData
     pylonData["Temps"] = temperatures
 
     current = {}
