@@ -1,4 +1,4 @@
-FROM python
+FROM python:3.10.8-slim-buster
 
 RUN pip install --no-cache-dir pyserial paho-mqtt numpy construct
 
