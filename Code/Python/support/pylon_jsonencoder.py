@@ -25,7 +25,8 @@ def encodePylon_info(vi, bc):
     pylonData["BarCode"] = bc.Barcode
     return json.dumps(pylonData, sort_keys=False, separators=(',', ':'))
 
-def encodePylon_readings(decoded, ai):
+def encodePylon_readings(decoded):
+# def encodePylon_readings(decoded, ai):
 
     pylonData = {}
     cells = {}
@@ -33,7 +34,7 @@ def encodePylon_readings(decoded, ai):
     for c in range(numberOfCells):
         cellData = {}
         cellData["Reading"] = decoded.CellVoltages[c]
-        cellData["State"] = ai.CellState[c]
+        # cellData["State"] = ai.CellState[c]
         key = "Cell_{}"
         cells[key.format(c+1)] = cellData
     pylonData["Cells"] = cells
@@ -42,18 +43,18 @@ def encodePylon_readings(decoded, ai):
     for t in range(numberOfTemperatures):
         temperatureData = {}
         temperatureData["Reading"] = decoded.GroupedCellsTemperatures[t]
-        temperatureData["State"] = ai.CellsTemperatureStates[t]
+        # temperatureData["State"] = ai.CellsTemperatureStates[t]
         temperatures[_tempNames[t]] = temperatureData
     pylonData["Temps"] = temperatures
 
     current = {}
     current["Reading"] = decoded.Current
-    current["State"] = ai.CurrentState
+    # current["State"] = ai.CurrentState
     pylonData["PackCurrent"] = current
 
     voltage = {}
     voltage["Reading"] = decoded.Voltage
-    voltage["State"] = ai.VoltageState
+    # voltage["State"] = ai.VoltageState
     pylonData["PackVoltage"] = voltage
 
     pylonData["RemainingCapacity"] = decoded.RemainingCapacity

@@ -187,7 +187,7 @@ def periodic(polling_stop):
                     # log.debug("get_alarm_info: {}".format(ai))
                     pylonData = p.get_values_single(current_pack)
                     if pylonData: # got data
-                        mqttPublish(mqttClient, encodePylon_readings(pylonData, ai),"readings/Pack{}".format(current_pack+1))
+                        mqttPublish(mqttClient, encodePylon_readings(pylonData),"readings/Pack{}".format(current_pack+1))
                         current_pack += 1
                         current_pack %= number_of_packs
                     else:
