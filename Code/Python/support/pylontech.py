@@ -53,6 +53,13 @@ class Pylontech:
         "_UserDefined1" / construct.Int8ub,
         "CurrentState" / construct.Int8ub,
         "VoltageState" / construct.Int8ub,
+        "ProtectSts1" / construct.Int8ub,
+        "ProtectSts2" / construct.Int8ub,
+        "SystemSts" / construct.Int8ub,
+        "FaultSts" / construct.Int8ub,
+        "Skip81" / construct.Int16ub,
+        "AlarmSts1" / construct.Int8ub,
+        "AlarmSts2" / construct.Int8ub
     )
 
     pack_count_fmt = construct.Struct(
@@ -103,6 +110,7 @@ class Pylontech:
     def send_cmd(self, address: int, cmd, info: bytes = b''):
         raw_frame = self._encode_cmd(address, cmd, info)
         self.s.write(raw_frame)
+        log.debug("send_cmd: {}".format(raw_frame.hex()))
 
     def _encode_cmd(self, address: int, cid2: int, info: bytes = b''):
         cid1 = 0x46
@@ -134,9 +142,9 @@ class Pylontech:
 
     def read_frame(self):
         raw_frame = self.s.read_until(b'\r')
-        log.debug("read_frame: {}".format(raw_frame.hex()))
         f = self._decode_hw_frame(raw_frame=raw_frame)
         parsed = self._decode_frame(f)
+        log.debug("read_frame: {}".format(raw_frame.hex()))
         return parsed
 
     def get_pack_count(self):
