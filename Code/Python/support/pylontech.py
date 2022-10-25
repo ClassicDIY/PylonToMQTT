@@ -166,14 +166,24 @@ class Pylontech:
         bdevid = "{:02X}".format(dev_id).encode()
         self.send_cmd(dev_id, 0x44, bdevid)
         f = self.read_frame()
-
-        return self.get_alarm_fmt.parse(f.info[1:])
-
+        il = int.from_bytes(f.infolength, byteorder='big', signed=False)
+        il &= 0x0FFF
+        log.debug("get_alarm_info infolength: {}".format(il))
+        if il > 22: # minimum response size 
+            return self.get_alarm_fmt.parse(f.info[1:])
+        else:
+            return 
+            
     def get_values_single(self, dev_id):
         bdevid = "{:02X}".format(dev_id).encode()
         self.send_cmd(dev_id, 0x42, bdevid)
         f = self.read_frame()
+        il = int.from_bytes(f.infolength, byteorder='big', signed=False)
+        il &= 0x0FFF
+        log.debug("get_values_single infolength: {}".format(il))
+        if il > 45: # minimum response size 
+            return self.get_analog_fmt.parse(f.info[1:])
+        else:
+            return
 
-        d = self.get_analog_fmt.parse(f.info[1:])
-        return d
 

@@ -160,9 +160,6 @@ def periodic(polling_stop):
     global mqttClient, infoPublished, mqttErrorCount, currentPollRate, number_of_packs, current_pack, info_published
 
     if not polling_stop.is_set():
-        #Get the current time as a float of seconds.
-        beforeTime = time_ns() /  1000000000.0
-
         try:
             if mqttConnected:
                 data = {}
@@ -174,17 +171,17 @@ def periodic(polling_stop):
                     
                 else :
                     if not info_published[current_pack]:
-                        vi = p.get_version_info(current_pack)
+                        vi = p.get_version_info(current_pack+1)
                         log.debug("version_info: {}".format(vi.Version))
                         if vi:
-                            bc = p.get_barcode(current_pack)
+                            bc = p.get_barcode(current_pack+1)
                             log.debug("barcode: {}".format(bc.Barcode))
                             if bc:
                                 mqttPublish(mqttClient, encodePylon_info(vi, bc),"info/Pack{}".format(current_pack+1))
                                 info_published[current_pack] = True
-                    # ai = p.get_alarm_info(current_pack)
+                    pylonData = p.get_values_single(current_pack+1)
+                    # ai = p.get_alarm_info(current_pack+1)
                     # log.debug("get_alarm_info: {}".format(ai))
-                    pylonData = p.get_values_single(current_pack)
                     if pylonData: # got data
                         mqttPublish(mqttClient, encodePylon_readings(pylonData),"readings/Pack{}".format(current_pack+1))
                         current_pack += 1
@@ -195,17 +192,10 @@ def periodic(polling_stop):
         except Exception as e:
             log.error("Caught Error in periodic")
             log.exception(e, exc_info=True)
+            current_pack += 1 # move on to next pack
+            current_pack %= number_of_packs
 
-        #Account for the time that has been spent on this cycle to do the actual work
-        timeUntilNextInterval = currentPollRate - (time_ns()/1000000000.0 - beforeTime)
-
-        # If doing the work took too long, skip as many polling forward so that we get a time in the future.
-        while (timeUntilNextInterval < 0):
-            log.debug("Adjusting next interval to account for cycle taking too long: {}".format(timeUntilNextInterval))
-            timeUntilNextInterval = timeUntilNextInterval + currentPollRate 
-            log.debug("Adjusted interval: {}".format(timeUntilNextInterval))
-
-        #log.debug("Next Interval: {}".format(timeUntilNextInterval))
+        timeUntilNextInterval = currentPollRate
         # set myself to be called again in correct number of seconds
         threading.Timer(timeUntilNextInterval, periodic, [polling_stop]).start()
 
