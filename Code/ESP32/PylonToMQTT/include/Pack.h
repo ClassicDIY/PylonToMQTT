@@ -33,20 +33,29 @@ class Pack {
  
     void PublishDiscovery();
 
+    bool InfoPublished() {
+        return _infoPublised;
+    }
+    void SetInfoPublished() {
+      _infoPublised = true;
+    }
+
 protected:
     // <discovery_prefix>/<component>/<object_id>/config -> homeassistant/sensor/1FC220_Pack2_SOC/config
     // object_id -> ESP<uniqueId>_<pack>_<entity>
     void PublishDiscoverySub(const char *component, const char *entityName, const char *jsonElement, const char *device_class, const char *unit_of_meas, const char *icon = "");
-    void PublishTemps();
-    void PublishCells();
+    void PublishTempsDiscovery();
+    void PublishCellsDiscovery();
     bool ReadyToPublish() {
-        return (!_discoveryPublished && !_barCode.empty() && !_versionInfo.empty());
+        return (!_discoveryPublished && InfoPublished());
     }
+
 
 private:
     std::string _name;
     std::string _barCode;
     std::string _versionInfo;
+    boolean _infoPublised = false;
     boolean _discoveryPublished = false;
     IOTCallbackInterface* _pcb;
     std::vector<string>* _pTempKeys;

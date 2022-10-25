@@ -13,13 +13,13 @@ void Pack::PublishDiscovery()
         PublishDiscoverySub("sensor", "PackCurrent", "PackCurrent.Reading", "current", "A", "mdi:current-dc");
         PublishDiscoverySub("sensor", "SOC", "SOC", "battery", "%");
         PublishDiscoverySub("sensor", "RemainingCapacity", "RemainingCapacity", "current", "Ah", "mdi:ev-station");
-        PublishTemps();
-        PublishCells();
+        PublishTempsDiscovery();
+        PublishCellsDiscovery();
         _discoveryPublished = true;
     }
 }
 
-void Pack::PublishTemps() {
+void Pack::PublishTempsDiscovery() {
 	char jsonElement[STR_LEN];
 	for (int i = 0; i < _numberOfTemps; i++) {
         if (i < _pTempKeys->size()) {
@@ -29,7 +29,7 @@ void Pack::PublishTemps() {
 	}
 }
 
-void Pack::PublishCells() {
+void Pack::PublishCellsDiscovery() {
 	char entityName[STR_LEN];
     char jsonElement[STR_LEN];
 	for (int i = 0; i < _numberOfCells; i++) {

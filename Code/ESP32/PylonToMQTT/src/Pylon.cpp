@@ -4,7 +4,8 @@
 
 namespace PylonToMQTT
 {
-CommandInformation _commands[] = { CommandInformation::GetVersionInfo, CommandInformation::GetBarCode, CommandInformation::AnalogValueFixedPoint, CommandInformation::AlarmInfo, CommandInformation::None };
+CommandInformation _infoCommands[] = { CommandInformation::GetVersionInfo, CommandInformation::GetBarCode, CommandInformation::None };
+CommandInformation _readingsCommands[] = { CommandInformation::AnalogValueFixedPoint, CommandInformation::AlarmInfo, CommandInformation::None };
 
 Pylon::Pylon()
 {
@@ -24,35 +25,58 @@ bool Pylon::Transmit() {
 	    send_cmd(0xFF, CommandInformation::GetPackCount);
     }
     else {
-		if (_commands[_commandIndex] != CommandInformation::None){
-			send_cmd(_currentPack+1, _commands[_commandIndex]);
-		}
-		else {
-			if (_root.size() > 0) {
-				String s;
-				serializeJson(_root, s);
-				_root.clear();
-				char buf[64];
-				sprintf(buf, "readings/Pack%d", _currentPack+1); 
-				_pcb->Publish(buf, s.c_str(), false);
+		if (_currentPack < _Packs.size()) {
+			if (_Packs[_currentPack].InfoPublished() == false) {
+				if (_infoCommands[_infoCommandIndex] != CommandInformation::None){
+					send_cmd(_currentPack+1, _infoCommands[_infoCommandIndex]);
+				}
+				else {
+					if (_root.size() > 0) {
+						String s;
+						serializeJson(_root, s);
+						_root.clear();
+						char buf[64];
+						sprintf(buf, "info/Pack%d", _currentPack+1); 
+						_pcb->Publish(buf, s.c_str(), true);
+						_Packs[_currentPack].SetInfoPublished();
+					}
+				}
+				_infoCommandIndex++;
+				if (_infoCommandIndex == sizeof(_infoCommands)){
+					_infoCommandIndex = 0;
+					_currentPack++;
+					if (_currentPack == _numberOfPacks){
+						_currentPack = 0;
+						sequenceComplete = true;
+					}
+				}
+			}
+			else {
+				if (_readingsCommands[_readingsCommandIndex] != CommandInformation::None){
+					send_cmd(_currentPack+1, _readingsCommands[_readingsCommandIndex]);
+				}
+				else {
+					if (_root.size() > 0) {
+						String s;
+						serializeJson(_root, s);
+						_root.clear();
+						char buf[64];
+						sprintf(buf, "readings/Pack%d", _currentPack+1); 
+						_pcb->Publish(buf, s.c_str(), false);
+					}
+				}
+				_readingsCommandIndex++;
+				if (_readingsCommandIndex == sizeof(_readingsCommands)){
+					_readingsCommandIndex = 0;
+					_currentPack++;
+					if (_currentPack == _numberOfPacks){
+						_currentPack = 0;
+						sequenceComplete = true;
+					}
+				}
 			}
 		}
-		sequenceComplete = Next();
     }
-	return sequenceComplete;
-}
-
-bool Pylon::Next() {
-	bool sequenceComplete = false;
-	_commandIndex++;
-	if (_commandIndex == sizeof(_commands)){
-		_commandIndex = 0;
-		_currentPack++;
-		if (_currentPack == _numberOfPacks){
-			_currentPack = 0;
-			sequenceComplete = true;
-		}
-	}
 	return sequenceComplete;
 }
 
@@ -199,10 +223,12 @@ int Pylon::ParseResponse(char *szResponse, size_t readNow, CommandInformation cm
 					_Packs[packIndex].PublishDiscovery(); // PublishDiscovery if ready and not already published
 				}
 				JsonObject entry = _root.createNestedObject("PackCurrent");
-				entry["Reading"] = ((int16_t)toShort(index, v))/100.0;
+				float current = ((int16_t)toShort(index, v))/100.0;
+				entry["Reading"] = current;
 				entry["State"] = 0;  // default to ok
 				entry = _root.createNestedObject("PackVoltage");
-				entry["Reading"] = (toShort(index, v))/1000.0;
+				float voltage = (toShort(index, v))/1000.0;
+				entry["Reading"] = voltage;
 				entry["State"] = 0;  // default to ok
 				int remain = toShort(index, v);
 				_root["RemainingCapacity"] = (remain/100.0);
@@ -211,6 +237,7 @@ int Pylon::ParseResponse(char *szResponse, size_t readNow, CommandInformation cm
 				_root["FullCapacity"] = (total/100.0);
 				_root["CycleCount"] = ((v[index++]<<8) | v[index++]);
 				_root["SOC"] = (remain * 100) / total;	
+				_root["Power"] = voltage * current;
 				// module["LAST"] = ((v[index++]<<8) | (v[index++]<<8) | v[index++]); 
 			}
 			break;
@@ -231,13 +258,12 @@ int Pylon::ParseResponse(char *szResponse, size_t readNow, CommandInformation cm
 				uint16_t packNumber = INFO & 0x00FF;
 				
 				JsonObject cells = _root.getMember("Cells");
-				JsonObject cell = cells.getMember("Cell-1");
 				logi("GetAlarm: Pack: %d", packNumber);
 				char key[16];
 				uint16_t numberOfCells = v[index++];
 				logd("number of cells: %d", numberOfCells );
 				for (int i = 0; i < numberOfCells; i++) {
-					sprintf(key, "Cell-%d", i+1);
+					sprintf(key, "Cell_%d", i+1);
 					JsonObject cell = cells.getMember(key);
 					cell["State"] = v[index++];  
 				}
@@ -263,61 +289,59 @@ int Pylon::ParseResponse(char *szResponse, size_t readNow, CommandInformation cm
 				uint8_t AlarmSts1 = v[index++];
 				uint8_t AlarmSts2 = v[index++];
 
-				JsonObject pso = _root.createNestedObject("Protect Status");
-				pso["Charger OVP"] = CheckBit(ProtectSts1, 7);
+				JsonObject pso = _root.createNestedObject("Protect_Status");
+				pso["Charger_OVP"] = CheckBit(ProtectSts1, 7);
 				pso["SCP"] = CheckBit(ProtectSts1, 6);
-				pso["DSG OCP"] = CheckBit(ProtectSts1, 5);
-				pso["CHG OCP"] = CheckBit(ProtectSts1, 4);
-				pso["Pack UVP"] = CheckBit(ProtectSts1, 3);
-				pso["Pack OVP"] = CheckBit(ProtectSts1, 2);
-				pso["Cell UVP"] = CheckBit(ProtectSts1, 1);
-				pso["Cell OVP"] = CheckBit(ProtectSts1, 0);
-				pso["ENV UTP"] = CheckBit(ProtectSts2, 6);
-				pso["ENV OTP"] = CheckBit(ProtectSts2, 5);
-				pso["MOS OTP"] = CheckBit(ProtectSts2, 4);
-				pso["DSG UTP"] = CheckBit(ProtectSts2, 3);
-				pso["CHG UTP"] = CheckBit(ProtectSts2, 2);
-				pso["DSG OTP"] = CheckBit(ProtectSts2, 1);
-				pso["CHG OTP"] = CheckBit(ProtectSts2, 0);
+				pso["DSG_OCP"] = CheckBit(ProtectSts1, 5);
+				pso["CHG_OCP"] = CheckBit(ProtectSts1, 4);
+				pso["Pack_UVP"] = CheckBit(ProtectSts1, 3);
+				pso["Pack_OVP"] = CheckBit(ProtectSts1, 2);
+				pso["Cell_UVP"] = CheckBit(ProtectSts1, 1);
+				pso["Cell_OVP"] = CheckBit(ProtectSts1, 0);
+				pso["ENV_UTP"] = CheckBit(ProtectSts2, 6);
+				pso["ENV_OTP"] = CheckBit(ProtectSts2, 5);
+				pso["MOS_OTP"] = CheckBit(ProtectSts2, 4);
+				pso["DSG_UTP"] = CheckBit(ProtectSts2, 3);
+				pso["CHG_UTP"] = CheckBit(ProtectSts2, 2);
+				pso["DSG_OTP"] = CheckBit(ProtectSts2, 1);
+				pso["CHG_OTP"] = CheckBit(ProtectSts2, 0);
 
-				JsonObject sso = _root.createNestedObject("System Status");
-				sso["Fully Charged"] = CheckBit(ProtectSts2, 7);
+				JsonObject sso = _root.createNestedObject("System_Status");
+				sso["Fully_Charged"] = CheckBit(ProtectSts2, 7);
 				sso["Heater"] = CheckBit(SystemSts, 7);
-				sso["AC in"] = CheckBit(SystemSts, 5);
-				sso["Discharge-MOS"] = CheckBit(SystemSts, 2);
-				sso["Charge-MOS"] = CheckBit(SystemSts, 1);
-				sso["Charge-Limit"] = CheckBit(SystemSts, 0);
+				sso["AC_in"] = CheckBit(SystemSts, 5);
+				sso["Discharge_MOS"] = CheckBit(SystemSts, 2);
+				sso["Charge_MOS"] = CheckBit(SystemSts, 1);
+				sso["Charge_Limit"] = CheckBit(SystemSts, 0);
 				
-				JsonObject fso = _root.createNestedObject("Fault Status");
-				fso["Heater Fault"] = CheckBit(FaultSts, 7);
-				fso["CCB Fault"] = CheckBit(FaultSts, 6);
-				fso["Sampling Fault"] = CheckBit(FaultSts, 5);
-				fso["Cell Fault"] = CheckBit(FaultSts, 4);
-				fso["NTC Fault"] = CheckBit(FaultSts, 2);
-				fso["DSG MOS Fault"] = CheckBit(FaultSts, 1);
-				fso["CHG MOS Fault"] = CheckBit(FaultSts, 0);
+				JsonObject fso = _root.createNestedObject("Fault_Status");
+				fso["Heater_Fault"] = CheckBit(FaultSts, 7);
+				fso["CCB_Fault"] = CheckBit(FaultSts, 6);
+				fso["Sampling_Fault"] = CheckBit(FaultSts, 5);
+				fso["Cell_Fault"] = CheckBit(FaultSts, 4);
+				fso["NTC_Fault"] = CheckBit(FaultSts, 2);
+				fso["DSG_MOS_Fault"] = CheckBit(FaultSts, 1);
+				fso["CHG_MOS_Fault"] = CheckBit(FaultSts, 0);
 
-				JsonObject aso = _root.createNestedObject("Alarm Status");
-				aso["DSG OC"] = CheckBit(AlarmSts1, 5);
-				aso["CHG OC"] = CheckBit(AlarmSts1, 4);
-				aso["Pack UV"] = CheckBit(AlarmSts1, 3);
-				aso["Pack OV"] = CheckBit(AlarmSts1, 2);
-				aso["Cell UV"] = CheckBit(AlarmSts1, 1);
-				aso["Cell OV"] = CheckBit(AlarmSts1, 0);
+				JsonObject aso = _root.createNestedObject("Alarm_Status");
+				aso["DSG_OC"] = CheckBit(AlarmSts1, 5);
+				aso["CHG_OC"] = CheckBit(AlarmSts1, 4);
+				aso["Pack_UV"] = CheckBit(AlarmSts1, 3);
+				aso["Pack_OV"] = CheckBit(AlarmSts1, 2);
+				aso["Cell_UV"] = CheckBit(AlarmSts1, 1);
+				aso["Cell_OV"] = CheckBit(AlarmSts1, 0);
 
-				aso["SOC Low"] = CheckBit(AlarmSts2, 7);
-				aso["MOS OT"] = CheckBit(AlarmSts2, 6);
-				aso["ENV UT"] = CheckBit(AlarmSts2, 5);
-				aso["ENV OT"] = CheckBit(AlarmSts2, 4);
-				aso["DSG UT"] = CheckBit(AlarmSts2, 3);
-				aso["CHG UT"] = CheckBit(AlarmSts2, 2);
-				aso["DSG OT"] = CheckBit(AlarmSts2, 1);
-				aso["CHG OT"] = CheckBit(AlarmSts2, 0);
+				aso["SOC_Low"] = CheckBit(AlarmSts2, 7);
+				aso["MOS_OT"] = CheckBit(AlarmSts2, 6);
+				aso["ENV_UT"] = CheckBit(AlarmSts2, 5);
+				aso["ENV_OT"] = CheckBit(AlarmSts2, 4);
+				aso["DSG_UT"] = CheckBit(AlarmSts2, 3);
+				aso["CHG_UT"] = CheckBit(AlarmSts2, 2);
+				aso["DSG_OT"] = CheckBit(AlarmSts2, 1);
+				aso["CHG_OT"] = CheckBit(AlarmSts2, 0);
 			}
 			break;
 			case CommandInformation::GetBarCode: {
-				
-				
 				std::string bc;
 				std::string s(v.begin(), v.end()-2);
 				bc = s.substr(index);

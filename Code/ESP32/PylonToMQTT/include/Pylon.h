@@ -21,7 +21,7 @@ public:
     void Receive(int timeOut) { _asyncSerial->Receive(timeOut); };
     bool Transmit();
     int ParseResponse(char *szResponse, size_t readNow, CommandInformation cmd);
-    bool Next();
+
 
     //AsyncSerialCallbackInterface
     void complete() { 
@@ -36,7 +36,8 @@ public:
 
  protected:
  	StaticJsonDocument<4096> _root;
-    uint8_t _commandIndex = 0;
+    uint8_t _infoCommandIndex = 0;
+    uint8_t _readingsCommandIndex = 0;
     uint8_t _numberOfPacks = 0;
     uint8_t _currentPack = 0;
     AsyncSerial* _asyncSerial;
