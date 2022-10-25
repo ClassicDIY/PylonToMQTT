@@ -190,7 +190,7 @@ def periodic(polling_stop):
                     current_pack %= number_of_packs
 
         except Exception as e:
-            log.error("Response truncated! not enough data to process")
+            log.error("Failed to process response!")
             log.exception(e, exc_info=True)
             if number_of_packs > 0:
                 current_pack += 1 # move on to next pack

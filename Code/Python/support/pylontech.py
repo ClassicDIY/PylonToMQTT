@@ -142,9 +142,10 @@ class Pylontech:
 
     def read_frame(self):
         raw_frame = self.s.read_until(b'\r')
+        log.debug("received_response: {}".format(raw_frame.hex()))
         f = self._decode_hw_frame(raw_frame=raw_frame)
         parsed = self._decode_frame(f)
-        log.debug("read_frame: {}".format(raw_frame.hex()))
+        
         return parsed
 
     def get_pack_count(self):
