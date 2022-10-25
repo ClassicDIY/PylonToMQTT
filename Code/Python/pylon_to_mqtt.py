@@ -192,8 +192,9 @@ def periodic(polling_stop):
         except Exception as e:
             log.error("Response truncated! not enough data to process")
             log.exception(e, exc_info=True)
-            current_pack += 1 # move on to next pack
-            current_pack %= number_of_packs
+            if number_of_packs > 0:
+                current_pack += 1 # move on to next pack
+                current_pack %= number_of_packs
 
         timeUntilNextInterval = currentPollRate
         # set myself to be called again in correct number of seconds
