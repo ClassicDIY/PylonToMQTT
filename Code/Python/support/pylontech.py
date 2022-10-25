@@ -142,8 +142,9 @@ class Pylontech:
 
     def read_frame(self):
         raw_frame = self.s.read_until(b'\r')
-        log.debug("received_response: {}".format(raw_frame.hex()))
-        f = self._decode_hw_frame(raw_frame=raw_frame)
+        log_copy = raw_frame
+        log.debug("received_response: {}".format(log_copy.hex()))
+        f = self._decode_hw_frame(raw_frame)
         parsed = self._decode_frame(f)
         
         return parsed
