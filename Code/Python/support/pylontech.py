@@ -141,7 +141,8 @@ class Pylontech:
         return format.parse(frame)
 
     def read_frame(self):
-        raw_frame = self.s.read_until(b'\r')
+        # raw_frame = self.s.read_until(b'\r')
+        raw_frame = self.s.readline()
         log_copy = raw_frame
         log.debug("received_response: {}".format(log_copy.hex()))
         f = self._decode_hw_frame(raw_frame)
