@@ -84,7 +84,7 @@ class Pylontech:
     )
 
     def __init__(self, serial_port='/dev/ttyUSB0', baudrate=9600):
-        self.s = serial.Serial(serial_port, baudrate, bytesize=8, parity=serial.PARITY_NONE, stopbits=1, timeout=10)
+        self.s = serial.Serial(serial_port, baudrate, bytesize=8, parity=serial.PARITY_NONE, stopbits=1, timeout=5)
 
     @staticmethod
     def get_frame_checksum(frame: bytes):
