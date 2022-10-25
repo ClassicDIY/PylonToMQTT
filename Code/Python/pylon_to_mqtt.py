@@ -182,7 +182,7 @@ def periodic(polling_stop):
                             if bc:
                                 mqttPublish(mqttClient, encodePylon_info(vi, bc),"info/Pack{}".format(current_pack+1))
                                 info_published[current_pack] = True
-                    ai = p.get_alarm_info(current_pack)
+                    # ai = p.get_alarm_info(current_pack)
                     # log.debug("get_alarm_info: {}".format(ai))
                     pylonData = p.get_values_single(current_pack)
                     if pylonData: # got data
