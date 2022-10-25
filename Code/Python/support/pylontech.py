@@ -133,7 +133,8 @@ class Pylontech:
         return format.parse(frame)
 
     def read_frame(self):
-        raw_frame = self.s.readline()
+        raw_frame = self.s.read_until(b'\r')
+        log.debug("read_frame: {}".format(raw_frame.hex()))
         f = self._decode_hw_frame(raw_frame=raw_frame)
         parsed = self._decode_frame(f)
         return parsed
@@ -165,14 +166,14 @@ class Pylontech:
         bdevid = "{:02X}".format(dev_id).encode()
         self.send_cmd(dev_id, 0x44, bdevid)
         f = self.read_frame()
-        log.debug("get_values_single: {}".format(construct.hexdump(f.info, 32)))
+
         return self.get_alarm_fmt.parse(f.info[1:])
 
     def get_values_single(self, dev_id):
         bdevid = "{:02X}".format(dev_id).encode()
         self.send_cmd(dev_id, 0x42, bdevid)
         f = self.read_frame()
-        log.debug("get_values_single: {}".format(construct.hexdump(f.info, 32)))
+
         d = self.get_analog_fmt.parse(f.info[1:])
         return d
 

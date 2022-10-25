@@ -1,7 +1,6 @@
 import socket
 import logging
 import sys, getopt
-import os
 import re
 
 

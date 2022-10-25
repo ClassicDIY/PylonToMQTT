@@ -8,7 +8,6 @@
 
 import json
 import logging
-import datetime
 
 log = logging.getLogger("PylonToMQTT")
 

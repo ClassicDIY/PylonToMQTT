@@ -6,7 +6,6 @@ import threading
 import logging
 import os
 import sys
-import numpy
 from random import randint, seed
 from enum import Enum
 
@@ -171,7 +170,7 @@ def periodic(polling_stop):
                     number_of_packs = p.get_pack_count().PackCount
                     log.debug("Pack count: {}".format(number_of_packs))
                     current_pack = 0
-                    info_published = numpy.full(int(number_of_packs), False)
+                    info_published = [False] * number_of_packs
                     
                 else :
                     if not info_published[current_pack]:
