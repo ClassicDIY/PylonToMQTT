@@ -237,7 +237,7 @@ int Pylon::ParseResponse(char *szResponse, size_t readNow, CommandInformation cm
 				_root["FullCapacity"] = (total/100.0);
 				_root["CycleCount"] = ((v[index++]<<8) | v[index++]);
 				_root["SOC"] = (remain * 100) / total;	
-				_root["Power"] = voltage * current;
+				_root["Power"] = round(voltage * current);
 				// module["LAST"] = ((v[index++]<<8) | (v[index++]<<8) | v[index++]); 
 			}
 			break;
