@@ -53,13 +53,6 @@ class Pylontech:
         "_UserDefined1" / construct.Int8ub,
         "CurrentState" / construct.Int8ub,
         "VoltageState" / construct.Int8ub,
-        "ProtectSts1" / construct.Int8ub,
-        "ProtectSts2" / construct.Int8ub,
-        "SystemSts" / construct.Int8ub,
-        "FaultSts" / construct.Int8ub,
-        "Skip81" / construct.Int16ub,
-        "AlarmSts1" / construct.Int8ub,
-        "AlarmSts2" / construct.Int8ub
     )
 
     pack_count_fmt = construct.Struct(
@@ -110,7 +103,6 @@ class Pylontech:
     def send_cmd(self, address: int, cmd, info: bytes = b''):
         raw_frame = self._encode_cmd(address, cmd, info)
         self.s.write(raw_frame)
-        log.debug("send_cmd: {}".format(raw_frame.hex()))
 
     def _encode_cmd(self, address: int, cid2: int, info: bytes = b''):
         cid1 = 0x46
@@ -141,13 +133,9 @@ class Pylontech:
         return format.parse(frame)
 
     def read_frame(self):
-        # raw_frame = self.s.read_until(b'\r')
         raw_frame = self.s.readline()
-        log_copy = raw_frame
-        log.debug("received_response: {}".format(log_copy.hex()))
-        f = self._decode_hw_frame(raw_frame)
+        f = self._decode_hw_frame(raw_frame=raw_frame)
         parsed = self._decode_frame(f)
-        
         return parsed
 
     def get_pack_count(self):
@@ -177,24 +165,13 @@ class Pylontech:
         bdevid = "{:02X}".format(dev_id).encode()
         self.send_cmd(dev_id, 0x44, bdevid)
         f = self.read_frame()
-        il = int.from_bytes(f.infolength, byteorder='big', signed=False)
-        il &= 0x0FFF
-        log.debug("get_alarm_info infolength: {}".format(il))
-        if il > 22: # minimum response size 
-            return self.get_alarm_fmt.parse(f.info[1:])
-        else:
-            return 
-            
+        # log.debug("get_values_single: {}".format(construct.hexdump(f.info, 32)))
+        return self.get_alarm_fmt.parse(f.info[1:])
+
     def get_values_single(self, dev_id):
         bdevid = "{:02X}".format(dev_id).encode()
         self.send_cmd(dev_id, 0x42, bdevid)
         f = self.read_frame()
-        il = int.from_bytes(f.infolength, byteorder='big', signed=False)
-        il &= 0x0FFF
-        log.debug("get_values_single infolength: {}".format(il))
-        if il > 45: # minimum response size 
-            return self.get_analog_fmt.parse(f.info[1:])
-        else:
-            return
-
-
+        # log.debug("get_values_single: {}".format(construct.hexdump(f.info, 32)))
+        d = self.get_analog_fmt.parse(f.info[1:])
+        return d
