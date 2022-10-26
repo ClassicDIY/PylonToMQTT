@@ -180,11 +180,10 @@ def periodic(polling_stop):
                                 mqttPublish(mqttClient, encodePylon_info(vi, bc),"info/Pack{}".format(current_pack+1))
                                 info_published[current_pack] = True
                     pylonData = p.get_values_single(current_pack+1)
-                    # ai = p.get_alarm_info(current_pack+1)
+                    ai = p.get_alarm_info(current_pack+1)
                     # log.debug("get_alarm_info: {}".format(ai))
                     if pylonData: # got data
-                        # mqttPublish(mqttClient, encodePylon_readings(pylonData, ai),"readings/Pack{}".format(current_pack+1))
-                        mqttPublish(mqttClient, encodePylon_readings(pylonData, 0),"readings/Pack{}".format(current_pack+1))
+                        mqttPublish(mqttClient, encodePylon_readings(pylonData, ai),"readings/Pack{}".format(current_pack+1))
                     else:
                         log.error("PYLON data not good, skipping publish")
                     current_pack += 1
