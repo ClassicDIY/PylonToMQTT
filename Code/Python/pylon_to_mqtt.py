@@ -17,11 +17,15 @@ from time import time_ns
 # --------------------------------------------------------------------------- # 
 # GLOBALS
 # --------------------------------------------------------------------------- # 
-MAX_PUBLISH_RATE               = 15        #in seconds
-MIN_PUBLISH_RATE               = 3         #in seconds
+MAX_PUBLISH_RATE            = 15        #in seconds
+MIN_PUBLISH_RATE            = 3         #in seconds
 DEFAULT_WAKE_RATE           = 5         #in seconds
 MQTT_MAX_ERROR_COUNT        = 300       #Number of errors on the MQTT before the tool exits
 MAIN_LOOP_SLEEP_SECS        = 5         #Seconds to sleep in the main loop
+CONFIG_VERSION              = "V1.2.1" # major.minor.build (major or minor will invalidate the configuration)
+HOME_ASSISTANT_PREFIX       = "homeassistant" # MQTT prefix used in autodiscovery
+
+tempKeys = ["CellTemp1_4", "CellTemp5_8", "CellTemp9_12", "CellTemp13_16", "MOS_T", "ENV_T"]
 
 # --------------------------------------------------------------------------- # 
 # Default startup values. Can be over-ridden by command line options.
@@ -47,8 +51,11 @@ mqttErrorCount              = 0
 currentPollRate             = DEFAULT_WAKE_RATE
 mqttClient                  = None
 number_of_packs             = 0 
-current_pack                = 0
+current_pack_index                = 0
 info_published              = None
+discovery_published         = None
+pack_versions               = None
+pack_barcodes               = None
 
 p = Pylontech()
 
@@ -61,7 +68,7 @@ if not log.handlers:
     formatter = logging.Formatter('%(asctime)s:%(levelname)s:%(name)s:%(message)s')
     handler.setFormatter(formatter)
     log.addHandler(handler) 
-    log.setLevel(os.environ.get("LOGLEVEL", "DEBUG"))
+    log.setLevel(os.environ.get("LOGLEVEL", "INFO"))
 
 # --------------------------------------------------------------------------- # 
 # MQTT On Connect function
@@ -69,12 +76,12 @@ if not log.handlers:
 def on_connect(client, userdata, flags, rc):
     global mqttConnected, mqttErrorCount, mqttClient
     if rc==0:
-        log.debug("MQTT connected OK Returned code={}".format(rc))
+        log.info("MQTT connected OK Returned code={}".format(rc))
         #subscribe to the commands
         try:
             topic = "{}{}/cmnd/#".format(argumentValues['mqttRoot'], argumentValues['rackName'])
             client.subscribe(topic)
-            log.debug("Subscribed to {}".format(topic))
+            log.info("Subscribed to {}".format(topic))
             
             #publish that we are Online
             will_topic = "{}{}/tele/LWT".format(argumentValues['mqttRoot'], argumentValues['rackName'])
@@ -97,7 +104,7 @@ def on_disconnect(client, userdata, rc):
     mqttConnected = False
     #if disconnetion was unexpectred (not a result of a disconnect request) then log it.
     if rc!=mqttclient.MQTT_ERR_SUCCESS:
-        log.debug("on_disconnect: Disconnected. ReasonCode={}".format(rc))
+        log.info("on_disconnect: Disconnected. ReasonCode={}".format(rc))
 
 # --------------------------------------------------------------------------- # 
 # MQTT On Message
@@ -112,7 +119,7 @@ def on_message(client, userdata, message):
         mqttErrorCount = 0
 
         msg = message.payload.decode(encoding='UTF-8').upper()
-        log.debug("Received MQTT message {}".format(msg))
+        log.info("Received MQTT message {}".format(msg))
 
         if msg == "{\"STOP\"}":
             doStop = True
@@ -129,27 +136,76 @@ def on_message(client, userdata, message):
                 else:
                     argumentValues['publishRate'] = newRate
                     currentPollRate = newRate
-                    log.debug("publishRate message received, setting rate to {}".format(newRate))
+                    log.info("publishRate message received, setting rate to {}".format(newRate))
             else:
                 log.error("on_message: Received something else")
             
 # --------------------------------------------------------------------------- # 
 # MQTT Publish the data
 # --------------------------------------------------------------------------- # 
-def mqttPublish(client, data, subtopic):
-    global mqttConnected, mqttErrorCount
+def mqttPublish(data, subtopic, retain):
+    global mqttConnected, mqttClient, mqttErrorCount
 
     topic = "{}{}/stat/{}".format(argumentValues['mqttRoot'], argumentValues['rackName'], subtopic)
-    log.debug("Publishing: {}".format(topic))
+    log.info("Publishing: {}".format(topic))
     
     try:
-        client.publish(topic,data)
+        mqttClient.publish(topic, data, qos=0, retain=retain)
         return True
     except Exception as e:
         log.error("MQTT Publish Error Topic:{}".format(topic))
         log.exception(e, exc_info=True)
         mqttConnected = False
+        mqttErrorCount += 1
         return False
+
+def PublishDiscoverySub(component, entity, jsonElement, device_class, unit_of_meas, icon=0):
+    global current_pack_index, pack_barcodes, pack_versions
+
+    current_pack_number = current_pack_index + 1 # pack number is origin 1
+    doc = {}
+    doc["device_class"] = device_class
+    doc["unit_of_measurement"] = unit_of_meas
+    doc["state_class"] = "measurement"
+    doc["name"] = entity
+    if (icon):
+        doc["icon"] = icon
+    doc["state_topic"] = "{}{}/stat/readings/Pack{}".format(argumentValues['mqttRoot'], argumentValues['rackName'], current_pack_number)
+    object_id = "Rpi_Pack{}_{}".format(current_pack_number, entity)
+    doc["unique_id"] = object_id
+    doc["value_template"] = "{{{{ value_json.{} }}}}".format(jsonElement)
+    doc["availability_topic"] = "{}{}/tele/LWT".format(argumentValues['mqttRoot'], argumentValues['rackName'])
+    device = {}
+    device["name"] = "Pack{}".format(current_pack_number)
+    device["via_device"] = argumentValues['mqttRoot'][:-1]
+    device["hw_version"] = pack_barcodes[current_pack_index]
+    device["sw_version"] = CONFIG_VERSION
+    device["manufacturer"] = "ClassicDIY"
+    device["model"] = pack_versions[current_pack_index]
+    doc["device"] = device
+    mqttClient.publish("{}/{}/{}/config".format(HOME_ASSISTANT_PREFIX, component, object_id),json.dumps(doc, sort_keys=False, separators=(',', ':')), qos=0, retain=False)
+   
+def PublishTempsDiscovery(numberOfTemps):
+    for x in range(numberOfTemps):
+        tempKey = "Temp{}".format(x)
+        if (x < len(tempKeys)):
+            tempKey = tempKeys[x]
+        PublishDiscoverySub("sensor",  tempKey, "Temps.{}.Reading".format(tempKey), "temperature", "°C")
+
+def PublishCellsDiscovery(numberOfCells):
+    for x in range(numberOfCells):
+        PublishDiscoverySub("sensor",  "Cell_{}".format(x+1), "Cells.Cell_{}.Reading".format(x+1), "voltage", "V", "mdi:lightning-bolt")
+
+def publishDiscovery(pylonData):
+    global current_pack_index
+    
+    PublishDiscoverySub("sensor", "PackVoltage", "PackVoltage.Reading", "voltage", "V", "mdi:lightning-bolt")
+    PublishDiscoverySub("sensor", "PackCurrent", "PackCurrent.Reading", "current", "A", "mdi:current-dc")
+    PublishDiscoverySub("sensor", "SOC", "SOC", "battery", "%", icon=0)
+    PublishDiscoverySub("sensor", "RemainingCapacity", "RemainingCapacity", "current", "Ah", "mdi:ev-station")
+    PublishCellsDiscovery(pylonData.NumberOfCells)
+    PublishTempsDiscovery(pylonData.NumberOfTemperatures)
+    discovery_published[current_pack_index] = True
 
 # --------------------------------------------------------------------------- # 
 # Periodic will be called when needed.
@@ -157,7 +213,7 @@ def mqttPublish(client, data, subtopic):
 # --------------------------------------------------------------------------- # 
 def periodic(polling_stop):    
 
-    global mqttClient, infoPublished, mqttErrorCount, currentPollRate, number_of_packs, current_pack, info_published
+    global infoPublished, currentPollRate, number_of_packs, current_pack_index, info_published, discovery_published, pack_barcodes, pack_versions
 
     if not polling_stop.is_set():
         try:
@@ -165,36 +221,46 @@ def periodic(polling_stop):
                 data = {}
                 if number_of_packs == 0:
                     number_of_packs = p.get_pack_count().PackCount
-                    log.debug("Pack count: {}".format(number_of_packs))
-                    current_pack = 0
+                    log.info("Pack count: {}".format(number_of_packs))
+                    current_pack_index = 0
                     info_published = [False] * number_of_packs
+                    discovery_published = [False] * number_of_packs
+                    pack_barcodes = [""] * number_of_packs
+                    pack_versions = [""] * number_of_packs
                     
                 else :
-                    if not info_published[current_pack]:
-                        vi = p.get_version_info(current_pack+1)
-                        log.debug("version_info: {}".format(vi.Version))
+                    current_pack_number = current_pack_index + 1 # pack number is origin 1
+                    if not info_published[current_pack_index]:
+                        vi = p.get_version_info(current_pack_number)
+                        pack_versions[current_pack_index] = vi.Version
+                        log.info("version_info: {}".format(vi.Version))
                         if vi:
-                            bc = p.get_barcode(current_pack+1)
-                            log.debug("barcode: {}".format(bc.Barcode))
+                            bc = p.get_barcode(current_pack_number)
+                            log.info("barcode: {}".format(bc.Barcode))
                             if bc:
-                                mqttPublish(mqttClient, encodePylon_info(vi, bc),"info/Pack{}".format(current_pack+1))
-                                info_published[current_pack] = True
-                    pylonData = p.get_values_single(current_pack+1)
-                    ai = p.get_alarm_info(current_pack+1)
-                    # log.debug("get_alarm_info: {}".format(ai))
+                                mqttPublish(encodePylon_info(vi, bc),"info/Pack{}".format(current_pack_number), True)
+                                info_published[current_pack_index] = True
+                                pack_barcodes[current_pack_index] = bc.Barcode
+                    pylonData = p.get_values_single(current_pack_number)
+                    log.debug("get_values_single: {}".format(pylonData))
+                    ai = p.get_alarm_info(current_pack_number)
+                    log.debug("get_alarm_info: {}".format(ai))
                     if pylonData: # got data
-                        mqttPublish(mqttClient, encodePylon_readings(pylonData, ai),"readings/Pack{}".format(current_pack+1))
+                        mqttPublish(encodePylon_readings(pylonData, ai),"readings/Pack{}".format(current_pack_number), False)
+                        if discovery_published[current_pack_index] == False:
+                            publishDiscovery(pylonData)
+                            
                     else:
                         log.error("PYLON data not good, skipping publish")
-                    current_pack += 1
-                    current_pack %= number_of_packs
+                    current_pack_index += 1
+                    current_pack_index %= number_of_packs
 
         except Exception as e:
             log.error("Failed to process response!")
             log.exception(e, exc_info=True)
             if number_of_packs > 0:
-                current_pack += 1 # move on to next pack
-                current_pack %= number_of_packs
+                current_pack_index += 1 # move on to next pack
+                current_pack_index %= number_of_packs
 
         timeUntilNextInterval = currentPollRate
         # set myself to be called again in correct number of seconds
