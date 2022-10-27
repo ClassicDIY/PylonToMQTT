@@ -367,7 +367,7 @@ void IOT::Publish(const char *topic, float value, boolean retained)
 void IOT::PublishMessage(const char* topic, JsonDocument& payload) {
 	String s;
 	serializeJson(payload, s);
-	if (_mqttClient.publish(topic, 0, true, s.c_str(), s.length()) == 0)
+	if (_mqttClient.publish(topic, 0, false, s.c_str(), s.length()) == 0)
 	{
 		loge("**** Configuration payload exceeds MAX MQTT Packet Size");
 	}
