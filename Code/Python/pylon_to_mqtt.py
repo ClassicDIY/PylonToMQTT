@@ -32,6 +32,7 @@ tempKeys = ["CellTemp1_4", "CellTemp5_8", "CellTemp9_12", "CellTemp13_16", "MOS_
 # --------------------------------------------------------------------------- # 
 argumentValues = { \
     'pylonPort':os.getenv('PYLON_PORT', "/dev/ttyUSB0"), \
+    'baud_rate':os.getenv('PYLON_BAUD_RATE', "9600"), \
     'rackName':os.getenv('RACK_NAME', "Main"), \
     'mqttHost':os.getenv('MQTT_HOST', "mosquitto"), \
     'mqttPort':os.getenv('MQTT_PORT', "1883"), \
@@ -51,13 +52,12 @@ mqttErrorCount              = 0
 currentPollRate             = DEFAULT_WAKE_RATE
 mqttClient                  = None
 number_of_packs             = 0 
-current_pack_index                = 0
+current_pack_index          = 0
 info_published              = None
 discovery_published         = None
 pack_versions               = None
 pack_barcodes               = None
-
-p = Pylontech()
+pylontech                   = None
 
 # --------------------------------------------------------------------------- # 
 # configure the logging
@@ -216,14 +216,16 @@ def publishDiscovery(pylonData):
 # --------------------------------------------------------------------------- # 
 def periodic(polling_stop):    
 
-    global infoPublished, currentPollRate, number_of_packs, current_pack_index, info_published, discovery_published, pack_barcodes, pack_versions
+    global pylontech, infoPublished, currentPollRate, number_of_packs, current_pack_index, info_published, discovery_published, pack_barcodes, pack_versions
 
     if not polling_stop.is_set():
         try:
             if mqttConnected:
+                if pylontech is None:
+                    pylontech = Pylontech(argumentValues['pylonPort'], int(argumentValues['baud_rate']))
                 data = {}
                 if number_of_packs == 0:
-                    number_of_packs = p.get_pack_count().PackCount
+                    number_of_packs = pylontech.get_pack_count().PackCount
                     log.info("Pack count: {}".format(number_of_packs))
                     current_pack_index = 0
                     info_published = [False] * number_of_packs
@@ -234,19 +236,19 @@ def periodic(polling_stop):
                 else :
                     current_pack_number = current_pack_index + 1 # pack number is origin 1
                     if not info_published[current_pack_index]:
-                        vi = p.get_version_info(current_pack_number)
+                        vi = pylontech.get_version_info(current_pack_number)
                         pack_versions[current_pack_index] = vi.Version
                         log.info("version_info: {}".format(vi.Version))
                         if vi:
-                            bc = p.get_barcode(current_pack_number)
+                            bc = pylontech.get_barcode(current_pack_number)
                             log.info("barcode: {}".format(bc.Barcode))
                             if bc:
                                 mqttPublish(encodePylon_info(vi, bc),"info/Pack{}".format(current_pack_number), True)
                                 info_published[current_pack_index] = True
                                 pack_barcodes[current_pack_index] = bc.Barcode
-                    pylonData = p.get_values_single(current_pack_number)
+                    pylonData = pylontech.get_values_single(current_pack_number)
                     log.debug("get_values_single: {}".format(pylonData))
-                    ai = p.get_alarm_info(current_pack_number)
+                    ai = pylontech.get_alarm_info(current_pack_number)
                     log.debug("get_alarm_info: {}".format(ai))
                     if pylonData: # got data
                         mqttPublish(encodePylon_readings(pylonData, ai),"readings/Pack{}".format(current_pack_number), False)

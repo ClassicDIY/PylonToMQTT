@@ -60,6 +60,7 @@ def handleArgs(argv,argVals):
     try:
       opts, args = getopt.getopt(argv,"h",
                     ["pylon_port=",
+                     "baud_rate=",
                      "rack_name=",
                      "mqtt_host=",
                      "mqtt_port=",
@@ -68,16 +69,18 @@ def handleArgs(argv,argVals):
                      "mqtt_pass=",
                      "publish_rate="])
     except getopt.GetoptError:
-        print("Error parsing command line parameters, please use: py --pylon_port <{}> --rack_name <{}> --mqtt_host <{}> --mqtt_port <{}> --mqtt_root <{}> --mqtt_user <username> --mqtt_pass <password> --publish_rate <{}>".format( \
-                   argVals['pylonPort'], argVals['rack_name'], argVals['mqttHost'], argVals['mqttPort'], argVals['mqttRoot'], argVals['publishRate']))
+        print("Error parsing command line parameters, please use: py --pylon_port <{}> --baud_rate <{}> --rack_name <{}> --mqtt_host <{}> --mqtt_port <{}> --mqtt_root <{}> --mqtt_user <username> --mqtt_pass <password> --publish_rate <{}>".format( \
+                   argVals['pylonPort'], argVals['baud_rate'], argVals['rack_name'], argVals['mqttHost'], argVals['mqttPort'], argVals['mqttRoot'], argVals['publishRate']))
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print ("Parameter help: py --pylon_port <{}> --rackName <{}> --mqtt_host <{}> --mqtt_port <{}> --mqtt_root <{}> --mqtt_user <username> --mqtt_pass <password> --publish_rate <{}>".format( \
-                    argVals['pylonPort'], argVals['rackName'], argVals['mqttHost'], argVals['mqttPort'], argVals['mqttRoot'], argVals['publishRate']))
+            print ("Parameter help: py --pylon_port <{}> --baud_rate <{}> --rackName <{}> --mqtt_host <{}> --mqtt_port <{}> --mqtt_root <{}> --mqtt_user <username> --mqtt_pass <password> --publish_rate <{}>".format( \
+                    argVals['pylonPort'], argVals['baud_rate'], argVals['rackName'], argVals['mqttHost'], argVals['mqttPort'], argVals['mqttRoot'], argVals['publishRate']))
             sys.exit()
         elif opt in ('--pylon_port'):
             argVals['pylonPort'] = validateStrParameter(arg,"pylon_port", argVals['pylonPort'])
+        elif opt in ('--baud_rate'):
+            argVals['baud_rate'] = validateIntParameter(arg,"baud_rate", argVals['baud_rate'])
         elif opt in ('--rackName'):
             argVals['rackName'] = validateStrParameter(arg,"rack_name", argVals['rackName'])
         elif opt in ("--mqtt_host"):
@@ -107,6 +110,7 @@ def handleArgs(argv,argVals):
     argVals['mqttUser'] = argVals['mqttUser'].strip()
 
     log.info("pylonPort = {}".format(argVals['pylonPort']))
+    log.info("baud_rate = {}".format(argVals['baud_rate']))
     log.info("rackName = {}".format(argVals['rackName']))
     log.info("mqttHost = {}".format(argVals['mqttHost']))
     log.info("mqttPort = {}".format(argVals['mqttPort']))
