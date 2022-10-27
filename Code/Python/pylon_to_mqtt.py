@@ -175,6 +175,8 @@ def PublishDiscoverySub(component, entity, jsonElement, device_class, unit_of_me
     doc["unique_id"] = object_id
     doc["value_template"] = "{{{{ value_json.{} }}}}".format(jsonElement)
     doc["availability_topic"] = "{}{}/tele/LWT".format(argumentValues['mqttRoot'], argumentValues['rackName'])
+    doc["pl_avail"] = "Online"
+    doc["pl_not_avail"] = "Offline"
     device = {}
     device["name"] = "Pack{}".format(current_pack_number)
     device["via_device"] = argumentValues['mqttRoot'][:-1]
@@ -182,6 +184,7 @@ def PublishDiscoverySub(component, entity, jsonElement, device_class, unit_of_me
     device["sw_version"] = CONFIG_VERSION
     device["manufacturer"] = "ClassicDIY"
     device["model"] = pack_versions[current_pack_index]
+    device["identifiers"] = "Pack{}_{}".format(current_pack_number, pack_barcodes[current_pack_index])
     doc["device"] = device
     mqttClient.publish("{}/{}/{}/config".format(HOME_ASSISTANT_PREFIX, component, object_id),json.dumps(doc, sort_keys=False, separators=(',', ':')), qos=0, retain=False)
    
