@@ -33,7 +33,7 @@ void onMqttConnect(bool sessionPresent)
 	char buf[64];
 	sprintf(buf, "%s/cmnd/#", _rootTopicPrefix);
 	_mqttClient.subscribe(buf, 0);
-	_mqttClient.publish(_willTopic, 0, true, "online", 6);
+	_mqttClient.publish(_willTopic, 0, true, "Online", 6);
 	logi("Subscribed to [%s], qos: 0", buf);
 }
 
@@ -62,7 +62,7 @@ void connectToMqtt()
 			strcat(_rootTopicPrefix, _bankName);
 
 			sprintf(_willTopic, "%s/tele/LWT", _rootTopicPrefix);
-			_mqttClient.setWill(_willTopic, 0, true, "offline");
+			_mqttClient.setWill(_willTopic, 0, true, "Offline");
 			_mqttClient.connect();
 			logd("rootTopicPrefix: %s", _rootTopicPrefix);
 		}

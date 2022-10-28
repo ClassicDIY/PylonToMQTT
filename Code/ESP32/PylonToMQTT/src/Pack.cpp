@@ -66,7 +66,8 @@ void Pack::PublishDiscoverySub(const char *component, const char *entity, const 
 
 	sprintf(buffer, "%s/tele/LWT", _pcb->getRootTopicPrefix().c_str());
 	doc["availability_topic"] = buffer;
-
+    doc["pl_avail"] = "Online";
+    doc["pl_not_avail"] = "Offline";
 	JsonObject device = doc.createNestedObject("device");
 	device["name"] = Name();
 	device["via_device"] = _pcb->getThingName();
