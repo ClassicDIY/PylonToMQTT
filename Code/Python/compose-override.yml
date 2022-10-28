@@ -5,6 +5,8 @@ services:
     restart: unless-stopped
     devices: 
       - /dev/ttyUSB0:/dev/ttyUSB0
+    depends_on:
+      - mosquitto
     environment:
       - LOGLEVEL=DEBUG
       - PYLON_PORT=/dev/ttyUSB0
