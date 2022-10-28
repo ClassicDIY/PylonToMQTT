@@ -3,6 +3,8 @@ services:
     container_name: pylon_to_mqtt
     image: classicdiy/pylon_to_mqtt:latest
     restart: unless-stopped
+    devices: 
+      - /dev/ttyUSB0:/dev/ttyUSB0
     environment:
       - LOGLEVEL=DEBUG
       - PYLON_PORT=/dev/ttyUSB0
