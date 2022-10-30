@@ -1,0 +1,5 @@
+
+1. If not in .ssh, go to docker hub, login and get access token in account settings->Security New Access Token. (
+2. On the system that has the pylon_to_mqtt running: docker login
+3. make sure PylonToMQTT container image is ready to upload to docker-hub with tag classicdiy/pylon_to_mqtt:latest
+4. docker push classicdiy/pylon_to_mqtt:latest
