@@ -1,4 +1,4 @@
-from paho.mqtt import client as mqttclient
+from paho.mqtt import client as mqttclient, error_string
 from collections import OrderedDict
 import json
 import time
@@ -106,7 +106,7 @@ def on_disconnect(client, userdata, rc):
     mqttConnected = False
     #if disconnetion was unexpectred (not a result of a disconnect request) then log it.
     if rc!=mqttclient.MQTT_ERR_SUCCESS:
-        log.info("on_disconnect: Disconnected. ReasonCode={}".format(rc))
+        log.info("on_disconnect: Disconnected. ReasonCode={}".format(error_string(rc)))
 
 # --------------------------------------------------------------------------- # 
 # MQTT On Message
