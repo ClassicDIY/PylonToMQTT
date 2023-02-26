@@ -3,3 +3,28 @@
 2. On the system that has the pylon_to_mqtt running: docker login
 3. make sure PylonToMQTT container image is ready to upload to docker-hub with tag classicdiy/pylon_to_mqtt:latest
 4. docker push classicdiy/pylon_to_mqtt:latest
+
+env
+export COMPOSE_HTTP_TIMEOUT=120
+export LOGLEVEL=INFO
+
+Influx
+use mqtt_pylon
+delete from mqtt_consumer
+
+clear logs
+
+docker ps
+sudo sh -c 'echo "" > $(docker inspect --format="{{.LogPath}}" pylon_to_mqtt)'
+sudo sh -c 'echo "" > $(docker inspect --format="{{.LogPath}}" grafana)'
+sudo sh -c 'echo "" > $(docker inspect --format="{{.LogPath}}" influxdb)'
+sudo sh -c 'echo "" > $(docker inspect --format="{{.LogPath}}" telegraf)'
+sudo sh -c 'echo "" > $(docker inspect --format="{{.LogPath}}" portainer-ce)'
+docker logs pylon_to_mqtt --tail 100
+docker logs grafana --tail 100
+docker logs influxdb --tail 100
+docker logs telegraf --tail 100
+docker logs portainer-ce --tail 100
+
+
+docker run -d --name pylon_to_mqtt --device=/dev/ttyUSB0:/dev/ttyUSB0  pylon_to_mqtt --pylon_port /dev/ttyUSB0 --mqtt_host 192.168.86.23
