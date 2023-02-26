@@ -49,6 +49,15 @@ def validateIntParameter(param, name, defaultValue):
         return defaultValue
     return temp
 
+def validateBoolParamter(param, name, defaultValue):
+    try:
+        temp = bool(param)
+    except Exception as e:
+        log.error("Invalid parameter, {} passed for {}".format(param, name))
+        log.exception(e, exc_info=False)
+        return defaultValue
+    return temp
+
 
 # --------------------------------------------------------------------------- # 
 # Handle the command line arguments
@@ -67,15 +76,16 @@ def handleArgs(argv,argVals):
                      "mqtt_root=",
                      "mqtt_user=",
                      "mqtt_pass=",
-                     "publish_rate="])
+                     "publish_rate=",
+                     "sok="])
     except getopt.GetoptError:
-        print("Error parsing command line parameters, please use: py --pylon_port <{}> --baud_rate <{}> --rack_name <{}> --mqtt_host <{}> --mqtt_port <{}> --mqtt_root <{}> --mqtt_user <username> --mqtt_pass <password> --publish_rate <{}>".format( \
-                   argVals['pylonPort'], argVals['baud_rate'], argVals['rack_name'], argVals['mqttHost'], argVals['mqttPort'], argVals['mqttRoot'], argVals['publishRate']))
+        print("Error parsing command line parameters, please use: py --pylon_port <{}> --baud_rate <{}> --rack_name <{}> --mqtt_host <{}> --mqtt_port <{}> --mqtt_root <{}> --mqtt_user <username> --mqtt_pass <password> --publish_rate <{}> --sok <{}>".format( \
+                   argVals['pylonPort'], argVals['baud_rate'], argVals['rack_name'], argVals['mqttHost'], argVals['mqttPort'], argVals['mqttRoot'], argVals['publishRate'], argVals['sok']))
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print ("Parameter help: py --pylon_port <{}> --baud_rate <{}> --rackName <{}> --mqtt_host <{}> --mqtt_port <{}> --mqtt_root <{}> --mqtt_user <username> --mqtt_pass <password> --publish_rate <{}>".format( \
-                    argVals['pylonPort'], argVals['baud_rate'], argVals['rackName'], argVals['mqttHost'], argVals['mqttPort'], argVals['mqttRoot'], argVals['publishRate']))
+            print ("Parameter help: py --pylon_port <{}> --baud_rate <{}> --rackName <{}> --mqtt_host <{}> --mqtt_port <{}> --mqtt_root <{}> --mqtt_user <username> --mqtt_pass <password> --publish_rate <{}> --sok <{}>".format( \
+                    argVals['pylonPort'], argVals['baud_rate'], argVals['rackName'], argVals['mqttHost'], argVals['mqttPort'], argVals['mqttRoot'], argVals['publishRate'], argVals['sok']))
             sys.exit()
         elif opt in ('--pylon_port'):
             argVals['pylonPort'] = validateStrParameter(arg,"pylon_port", argVals['pylonPort'])
@@ -95,6 +105,8 @@ def handleArgs(argv,argVals):
             argVals['mqttPassword'] = validateStrParameter(arg,"mqtt_pass", argVals['mqttPassword'])
         elif opt in ("--publish_rate"):
             argVals['publishRate'] = int(validateIntParameter(arg,"publish_rate", argVals['publishRate']))
+        elif opt in ("--sok"):
+            argVals['sok'] = bool(validateBoolParamter(arg, "sok", argVals['sok']))
 
     if ((argVals['publishRate'])<MIN_PUBLISH_RATE):
         print("--publishRate must be greater than or equal to {} seconds".format(MIN_PUBLISH_RATE))
@@ -119,6 +131,7 @@ def handleArgs(argv,argVals):
     log.info("mqttPassword = **********")
     #log.info("mqttPassword = {}".format(argVals['mqttPassword']))
     log.info("publishRate = {}".format(argVals['publishRate']))
+    log.info("sok = {}".format(argVals['sok']))
 
     #Make sure the last character in the root is a "/"
     if (not argVals['mqttRoot'].endswith("/")):

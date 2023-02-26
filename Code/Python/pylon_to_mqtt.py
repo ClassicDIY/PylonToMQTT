@@ -12,6 +12,7 @@ from enum import Enum
 from support.pylon_jsonencoder import encodePylon_readings, encodePylon_info
 from support.pylon_validate import handleArgs
 from support.pylontech import Pylontech
+from support.pylontech import PylonTechSOK
 from time import time_ns
 
 # --------------------------------------------------------------------------- # 
@@ -39,7 +40,8 @@ argumentValues = { \
     'mqttRoot':os.getenv('MQTT_ROOT', "PylonToMQTT"), \
     'mqttUser':os.getenv('MQTT_USER', ""), \
     'mqttPassword':os.getenv('MQTT_PASS', ""), \
-    'publishRate':int(os.getenv('PUBLISH_RATE', str(DEFAULT_WAKE_RATE)))
+    'publishRate':int(os.getenv('PUBLISH_RATE', str(DEFAULT_WAKE_RATE))), \
+    'sok':bool(os.getenv("SOK", ""))    # default is false (Jakiper battery)
 }
 
 # --------------------------------------------------------------------------- # 
@@ -222,7 +224,11 @@ def periodic(polling_stop):
         try:
             if mqttConnected:
                 if pylontech is None:
-                    pylontech = Pylontech(argumentValues['pylonPort'], int(argumentValues['baud_rate']))
+                    if argumentValues['sok']:
+                        pylontech = PylonTechSOK(argumentValues['pylonPort'], int(argumentValues['baud_rate']))
+                    else:
+                        pylontech = Pylontech(argumentValues['pylonPort'], int(argumentValues['baud_rate']))
+
                 data = {}
                 if number_of_packs == 0:
                     number_of_packs = pylontech.get_pack_count().PackCount
