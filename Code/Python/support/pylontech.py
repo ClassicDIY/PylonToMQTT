@@ -28,7 +28,7 @@ class ToVolt(construct.Adapter):
 class ToAmp(construct.Adapter):
     def _decode(self, obj, context, path) -> float:
         return round((obj / 100), 2)
-    
+
 class Round1(construct.Adapter):
     def _decode(self, obj, context, path) -> float:
         return round((obj), 1)
@@ -190,3 +190,25 @@ class Pylontech:
             return self.get_analog_fmt.parse(f.info[1:])
         else:
             return
+
+class PylonTechSOK(Pylontech):
+
+    # SOK 48v BMS uses RS232 protocol v.2.5 (0x25)
+    def _encode_cmd(self, address: int, cid2: int, info: bytes = b''):
+        cid1 = 0x46
+        info_length = Pylontech.get_info_length(info)
+        frame = "{:02X}{:02X}{:02X}{:02X}{:04X}".format(0x25, address, cid1, cid2, info_length).encode()
+        frame += info
+        frame_chksum = Pylontech.get_frame_checksum(frame)
+        whole_frame = (b"~" + frame + "{:04X}".format(frame_chksum).encode() + b"\r")
+        return whole_frame
+
+    # SOK 48v BMS reports 20 char version string padded with spaces (0x20)
+    def get_version_info(self, dev_id):
+        bdevid = "{:02X}".format(dev_id).encode()
+        self.send_cmd(0, 0xC1, bdevid)
+        f = self.read_frame()
+        version_info_fmt = construct.Struct(
+            "Version" / construct.PaddedString(20, "utf8")
+        )
+        return version_info_fmt.parse(f.info)
