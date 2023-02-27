@@ -16,5 +16,6 @@ services:
       - MQTT_ROOT=PylonToMQTT
  #     - MQTT_USER=ClassicPublisher
  #     - MQTT_PASS=ClassicPub123
+ #    - SOK=true
 
 
