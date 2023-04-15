@@ -24,6 +24,10 @@ The software is provided "AS IS", WITHOUT WARRANTY OF ANY KIND, express or impli
 Please refer to the <a href="https://github.com/ClassicDIY/PylonToMQTT/wiki">PylonToMQTT wiki</a> for more information.
 </p>
 
+<p>
+Support for the US2000 Pylontech batteries can be found at <a href="https://github.com/tomascrespo/pylon2mqtt">tomascrespo/pylon2mqtt</a>.
+</p>
+
 ## License
 ```
 
