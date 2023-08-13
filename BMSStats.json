@@ -906,7 +906,7 @@
             "uid": "df8XmYRgz"
           },
           "hide": true,
-          "query": "SELECT  (last(\"PackVoltage_Reading\")-(6*(55-last(\"PackVoltage_Reading\")))) / 55 *100 AS Voltage FROM \"mqtt_consumer\" GROUP BY \"topic\"",
+          "query": "SELECT  (55-(6*(55-last(\"PackVoltage_Reading\")))) / 55 *100 AS Voltage FROM \"mqtt_consumer\" GROUP BY \"topic\"",
           "rawQuery": true,
           "refId": "B",
           "resultFormat": "time_series"
