@@ -771,6 +771,7 @@
         "type": "influxdb",
         "uid": "df8XmYRgz"
       },
+      "description": "Estimate time until the battery is charged or empty based upon the last reading",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2413,6 +2414,6 @@
   "timezone": "",
   "title": "BMS Statistics",
   "uid": "yst6paZgz",
-  "version": 32,
+  "version": 33,
   "weekStart": ""
 }
