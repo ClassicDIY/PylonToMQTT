@@ -474,7 +474,7 @@
         ]
       },
       "gridPos": {
-        "h": 6,
+        "h": 3,
         "w": 4,
         "x": 12,
         "y": 3
@@ -764,6 +764,111 @@
           }
         }
       ],
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "df8XmYRgz"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "h"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 12,
+        "y": 6
+      },
+      "id": 139,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "9.2.2",
+      "targets": [
+        {
+          "alias": "Runtime",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "df8XmYRgz"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "mqtt_consumer",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT mean(TimeUntilEmpty) FROM (SELECT abs(last(\"RemainingCapacity\")/last(\"PackCurrent_Reading\")) AS TimeUntilEmpty FROM \"mqtt_consumer\" WHERE \"PackCurrent_Reading\" < 0 AND $timeFilter GROUP BY \"topic\" fill(null))",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "RemainingCapacity"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "df8XmYRgz"
+          },
+          "hide": false,
+          "query": "SELECT mean(TimeUntilFull) FROM (SELECT abs((last(\"FullCapacity\")-last(\"RemainingCapacity\"))/last(\"PackCurrent_Reading\")) AS TimeUntilFull FROM \"mqtt_consumer\" WHERE \"PackCurrent_Reading\" > 0 AND $timeFilter GROUP BY \"topic\" fill(null))",
+          "rawQuery": true,
+          "refId": "B",
+          "resultFormat": "time_series"
+        }
+      ],
+      "title": "Estimated Run or Charge time",
       "type": "stat"
     },
     {
@@ -2308,6 +2413,6 @@
   "timezone": "",
   "title": "BMS Statistics",
   "uid": "yst6paZgz",
-  "version": 31,
+  "version": 32,
   "weekStart": ""
 }
