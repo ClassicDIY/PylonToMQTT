@@ -815,7 +815,7 @@
       "pluginVersion": "9.2.2",
       "targets": [
         {
-          "alias": "Runtime",
+          "alias": "TimeUntilEmpty",
           "datasource": {
             "type": "influxdb",
             "uid": "df8XmYRgz"
@@ -837,7 +837,7 @@
           "measurement": "mqtt_consumer",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT mean(TimeUntilEmpty) FROM (SELECT abs(last(\"RemainingCapacity\")/last(\"PackCurrent_Reading\")) AS TimeUntilEmpty FROM \"mqtt_consumer\" WHERE \"PackCurrent_Reading\" < 0 AND $timeFilter GROUP BY \"topic\" fill(null))",
+          "query": "SELECT mean(TimeUntilEmpty) FROM (SELECT mean(\"RemainingCapacity\")/mean(\"PackCurrent_Reading\") AS TimeUntilEmpty, last(\"PackCurrent_Reading\") AS PackCurrent_Reading FROM \"mqtt_consumer\" WHERE $timeFilter GROUP BY \"topic\" fill(null)) WHERE \"PackCurrent_Reading\" < 0",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series",
@@ -858,12 +858,13 @@
           "tags": []
         },
         {
+          "alias": "TimeUntilFull",
           "datasource": {
             "type": "influxdb",
             "uid": "df8XmYRgz"
           },
           "hide": false,
-          "query": "SELECT mean(TimeUntilFull) FROM (SELECT abs((last(\"FullCapacity\")-last(\"RemainingCapacity\"))/last(\"PackCurrent_Reading\")) AS TimeUntilFull FROM \"mqtt_consumer\" WHERE \"PackCurrent_Reading\" > 0 AND $timeFilter GROUP BY \"topic\" fill(null))",
+          "query": "SELECT mean(TimeUntilFull) FROM (SELECT (mean(\"FullCapacity\")-mean(\"RemainingCapacity\"))/mean(\"PackCurrent_Reading\") AS TimeUntilFull, last(\"PackCurrent_Reading\") AS PackCurrent_Reading FROM \"mqtt_consumer\" WHERE $timeFilter GROUP BY \"topic\" fill(null)) WHERE \"PackCurrent_Reading\" > 0",
           "rawQuery": true,
           "refId": "B",
           "resultFormat": "time_series"
@@ -985,7 +986,7 @@
           "measurement": "mqtt_consumer",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT last(\"SOC\") FROM \"mqtt_consumer\" GROUP BY \"topic\"",
+          "query": "SELECT mean(\"SOC\") FROM \"mqtt_consumer\" GROUP BY \"topic\"",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series",
@@ -1012,7 +1013,7 @@
             "uid": "df8XmYRgz"
           },
           "hide": true,
-          "query": "SELECT  (55-(6*(55-last(\"PackVoltage_Reading\")))) / 55 *100 AS Voltage FROM \"mqtt_consumer\" GROUP BY \"topic\"",
+          "query": "SELECT  (55-((55/(55-46))*(55-mean(\"PackVoltage_Reading\")))) / 55 *100 AS Voltage FROM \"mqtt_consumer\" GROUP BY \"topic\"",
           "rawQuery": true,
           "refId": "B",
           "resultFormat": "time_series"
@@ -2030,7 +2031,7 @@
       "type": "timeseries"
     },
     {
-      "collapsed": true,
+      "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -2038,290 +2039,291 @@
         "y": 38
       },
       "id": 2,
-      "panels": [
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "df8XmYRgz"
-          },
-          "description": "Individual cell voltages",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "opacity",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "smooth",
-                "lineWidth": 2,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": true,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "dashed+area"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "red"
-                  },
-                  {
-                    "color": "transparent",
-                    "value": 3
-                  },
-                  {
-                    "color": "red",
-                    "value": 3.5
-                  }
-                ]
-              },
-              "unit": "volt"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 39
-          },
-          "id": 6,
-          "options": {
-            "legend": {
-              "calcs": [],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "df8XmYRgz"
-              },
-              "groupBy": [
-                {
-                  "params": [
-                    "$__interval"
-                  ],
-                  "type": "time"
-                },
-                {
-                  "params": [
-                    "null"
-                  ],
-                  "type": "fill"
-                }
-              ],
-              "measurement": "mqtt_consumer",
-              "orderByTime": "ASC",
-              "policy": "default",
-              "query": "SELECT mean(\"Cells_Cell_1_Reading\") AS Cell1, mean(\"Cells_Cell_2_Reading\") AS Cell2, mean(\"Cells_Cell_3_Reading\") AS Cell3, mean(\"Cells_Cell_4_Reading\") AS Cell4, mean(\"Cells_Cell_5_Reading\") AS Cell5, mean(\"Cells_Cell_6_Reading\") AS Cell6, mean(\"Cells_Cell_7_Reading\") AS Cell7, mean(\"Cells_Cell_8_Reading\") AS Cell8, mean(\"Cells_Cell_9_Reading\") AS Cell9, mean(\"Cells_Cell_10_Reading\") AS Cell10, mean(\"Cells_Cell_11_Reading\") AS Cell11, mean(\"Cells_Cell_12_Reading\") AS Cell12, mean(\"Cells_Cell_13_Reading\") AS Cell13, mean(\"Cells_Cell_14_Reading\") AS Cell14, mean(\"Cells_Cell_15_Reading\") AS Cell15, mean(\"Cells_Cell_16_Reading\") AS Cell16 FROM \"mqtt_consumer\" WHERE (\"topic\" =~ /$battery$/) AND $timeFilter GROUP BY time($Granularity) fill(null)",
-              "rawQuery": true,
-              "refId": "A",
-              "resultFormat": "time_series",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "Cells_Cell_1_Reading"
-                    ],
-                    "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "mean"
-                  }
-                ]
-              ],
-              "tags": [
-                {
-                  "key": "topic",
-                  "operator": "=~",
-                  "value": "/^$battery$/"
-                }
-              ]
-            }
-          ],
-          "title": "Cell Voltages",
-          "transformations": [
-            {
-              "id": "renameByRegex",
-              "options": {
-                "regex": "/mqtt_consumer./",
-                "renamePattern": ""
-              }
-            }
-          ],
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "df8XmYRgz"
-          },
-          "description": "Temperatures per group of 4 cells",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "opacity",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "smooth",
-                "lineWidth": 2,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": true,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "celsius"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 39
-          },
-          "id": 21,
-          "options": {
-            "legend": {
-              "calcs": [],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": false
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "df8XmYRgz"
-              },
-              "groupBy": [
-                {
-                  "params": [
-                    "$__interval"
-                  ],
-                  "type": "time"
-                },
-                {
-                  "params": [
-                    "null"
-                  ],
-                  "type": "fill"
-                }
-              ],
-              "measurement": "mqtt_consumer",
-              "orderByTime": "ASC",
-              "policy": "default",
-              "query": "SELECT mean(\"Temps_CellTemp1_4_Reading\") AS \"Cell1-4\", mean(\"Temps_CellTemp5_8_Reading\") AS \"Cell5-8\", mean(\"Temps_CellTemp9_12_Reading\") AS \"Cell9-12\", mean(\"Temps_CellTemp13_16_Reading\") AS \"Cell13-16\" FROM \"mqtt_consumer\" WHERE (\"topic\" =~ /$battery$/) AND $timeFilter GROUP BY time($Granularity) fill(null)",
-              "rawQuery": true,
-              "refId": "A",
-              "resultFormat": "time_series",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "Temps_CellTemp1_4_Reading"
-                    ],
-                    "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "mean"
-                  }
-                ]
-              ],
-              "tags": [
-                {
-                  "key": "topic",
-                  "operator": "=~",
-                  "value": "/^$battery$/"
-                }
-              ]
-            }
-          ],
-          "title": "Cell Group Temps",
-          "transformations": [
-            {
-              "id": "renameByRegex",
-              "options": {
-                "regex": "/mqtt_consumer./",
-                "renamePattern": ""
-              }
-            }
-          ],
-          "type": "timeseries"
-        }
-      ],
+      "panels": [],
       "repeat": "battery",
       "repeatDirection": "h",
       "title": "${battery} Detail",
       "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "df8XmYRgz"
+      },
+      "description": "Individual cell voltages",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "dashed+area"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "transparent",
+                "value": 3
+              },
+              {
+                "color": "red",
+                "value": 3.5
+              }
+            ]
+          },
+          "unit": "volt"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 39
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "df8XmYRgz"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "mqtt_consumer",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT mean(\"Cells_Cell_1_Reading\") AS Cell1, mean(\"Cells_Cell_2_Reading\") AS Cell2, mean(\"Cells_Cell_3_Reading\") AS Cell3, mean(\"Cells_Cell_4_Reading\") AS Cell4, mean(\"Cells_Cell_5_Reading\") AS Cell5, mean(\"Cells_Cell_6_Reading\") AS Cell6, mean(\"Cells_Cell_7_Reading\") AS Cell7, mean(\"Cells_Cell_8_Reading\") AS Cell8, mean(\"Cells_Cell_9_Reading\") AS Cell9, mean(\"Cells_Cell_10_Reading\") AS Cell10, mean(\"Cells_Cell_11_Reading\") AS Cell11, mean(\"Cells_Cell_12_Reading\") AS Cell12, mean(\"Cells_Cell_13_Reading\") AS Cell13, mean(\"Cells_Cell_14_Reading\") AS Cell14, mean(\"Cells_Cell_15_Reading\") AS Cell15, mean(\"Cells_Cell_16_Reading\") AS Cell16 FROM \"mqtt_consumer\" WHERE (\"topic\" =~ /$battery$/) AND $timeFilter GROUP BY time($Granularity) fill(null)",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "Cells_Cell_1_Reading"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "topic",
+              "operator": "=~",
+              "value": "/^$battery$/"
+            }
+          ]
+        }
+      ],
+      "title": "Cell Voltages",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "/mqtt_consumer./",
+            "renamePattern": ""
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "df8XmYRgz"
+      },
+      "description": "Temperatures per group of 4 cells",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 39
+      },
+      "id": 21,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "df8XmYRgz"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "mqtt_consumer",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT mean(\"Temps_CellTemp1_4_Reading\") AS \"Cell1-4\", mean(\"Temps_CellTemp5_8_Reading\") AS \"Cell5-8\", mean(\"Temps_CellTemp9_12_Reading\") AS \"Cell9-12\", mean(\"Temps_CellTemp13_16_Reading\") AS \"Cell13-16\" FROM \"mqtt_consumer\" WHERE (\"topic\" =~ /$battery$/) AND $timeFilter GROUP BY time($Granularity) fill(null)",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "Temps_CellTemp1_4_Reading"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "topic",
+              "operator": "=~",
+              "value": "/^$battery$/"
+            }
+          ]
+        }
+      ],
+      "title": "Cell Group Temps",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "/mqtt_consumer./",
+            "renamePattern": ""
+          }
+        }
+      ],
+      "type": "timeseries"
     }
   ],
   "refresh": "30s",
@@ -2414,6 +2416,6 @@
   "timezone": "",
   "title": "BMS Statistics",
   "uid": "yst6paZgz",
-  "version": 33,
+  "version": 35,
   "weekStart": ""
 }
