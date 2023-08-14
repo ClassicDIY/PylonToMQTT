@@ -771,7 +771,7 @@
         "type": "influxdb",
         "uid": "df8XmYRgz"
       },
-      "description": "Estimate time until the battery is charged or empty based upon the last reading",
+      "description": "Estimate time until the battery is charged or empty based upon the average reading over the time period",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -986,7 +986,7 @@
           "measurement": "mqtt_consumer",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT mean(\"SOC\") FROM \"mqtt_consumer\" GROUP BY \"topic\"",
+          "query": "SELECT mean(\"SOC\") FROM \"mqtt_consumer\" WHERE $timeFilter GROUP BY \"topic\"",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series",
@@ -1013,7 +1013,7 @@
             "uid": "df8XmYRgz"
           },
           "hide": true,
-          "query": "SELECT  (55-((55/(55-46))*(55-mean(\"PackVoltage_Reading\")))) / 55 *100 AS Voltage FROM \"mqtt_consumer\" GROUP BY \"topic\"",
+          "query": "SELECT  (55-((55/(55-46))*(55-mean(\"PackVoltage_Reading\")))) / 55 *100 AS Voltage FROM \"mqtt_consumer\" WHERE $timeFilter GROUP BY \"topic\"",
           "rawQuery": true,
           "refId": "B",
           "resultFormat": "time_series"
@@ -2091,7 +2091,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red"
+                "color": "red",
+                "value": null
               },
               {
                 "color": "transparent",
@@ -2234,7 +2235,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               }
             ]
           },
@@ -2414,6 +2416,6 @@
   "timezone": "",
   "title": "BMS Statistics",
   "uid": "yst6paZgz",
-  "version": 38,
+  "version": 40,
   "weekStart": ""
 }
