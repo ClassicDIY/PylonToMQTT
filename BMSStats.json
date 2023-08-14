@@ -837,7 +837,7 @@
           "measurement": "mqtt_consumer",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT mean(TimeUntilEmpty) FROM (SELECT mean(\"RemainingCapacity\")/mean(\"PackCurrent_Reading\") AS TimeUntilEmpty, last(\"PackCurrent_Reading\") AS PackCurrent_Reading FROM \"mqtt_consumer\" WHERE $timeFilter GROUP BY \"topic\" fill(null)) WHERE \"PackCurrent_Reading\" < 0",
+          "query": "SELECT abs(mean(TimeUntilEmpty)) FROM (SELECT mean(\"RemainingCapacity\")/mean(\"PackCurrent_Reading\") AS TimeUntilEmpty, last(\"PackCurrent_Reading\") AS PackCurrent_Reading FROM \"mqtt_consumer\" WHERE $timeFilter GROUP BY \"topic\" fill(null)) WHERE \"PackCurrent_Reading\" < 0",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series",
@@ -864,7 +864,7 @@
             "uid": "df8XmYRgz"
           },
           "hide": false,
-          "query": "SELECT mean(TimeUntilFull) FROM (SELECT (mean(\"FullCapacity\")-mean(\"RemainingCapacity\"))/mean(\"PackCurrent_Reading\") AS TimeUntilFull, last(\"PackCurrent_Reading\") AS PackCurrent_Reading FROM \"mqtt_consumer\" WHERE $timeFilter GROUP BY \"topic\" fill(null)) WHERE \"PackCurrent_Reading\" > 0",
+          "query": "SELECT abs(mean(TimeUntilFull)) FROM (SELECT (mean(\"FullCapacity\")-mean(\"RemainingCapacity\"))/mean(\"PackCurrent_Reading\") AS TimeUntilFull, last(\"PackCurrent_Reading\") AS PackCurrent_Reading FROM \"mqtt_consumer\" WHERE $timeFilter GROUP BY \"topic\" fill(null)) WHERE \"PackCurrent_Reading\" > 0",
           "rawQuery": true,
           "refId": "B",
           "resultFormat": "time_series"
@@ -1449,8 +1449,7 @@
             "mode": "percentage",
             "steps": [
               {
-                "color": "red",
-                "value": null
+                "color": "red"
               },
               {
                 "color": "yellow",
@@ -1564,8 +1563,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
-                "value": null
+                "color": "red"
               },
               {
                 "color": "transparent",
@@ -1757,8 +1755,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           },
@@ -1907,8 +1904,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           },
@@ -2091,8 +2087,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
-                "value": null
+                "color": "red"
               },
               {
                 "color": "transparent",
@@ -2235,8 +2230,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           },
@@ -2416,6 +2410,6 @@
   "timezone": "",
   "title": "BMS Statistics",
   "uid": "yst6paZgz",
-  "version": 35,
+  "version": 36,
   "weekStart": ""
 }
