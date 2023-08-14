@@ -891,7 +891,7 @@
         "type": "influxdb",
         "uid": "df8XmYRgz"
       },
-      "description": "State of charge difference between that reported (which uses estimated capacity) and an approximate % based off a 46V to 55V voltage range.\n\nWith multiple battery packs, the deviation sometimes becomes large and the capacity needs resetting.",
+      "description": "State of charge difference between that reported (which uses estimated capacity) and an approximate % based off a 46V to 55V voltage range, averaged over the time range.\n\nWith multiple battery packs, the deviation sometimes becomes large and the capacity needs resetting.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1030,7 +1030,7 @@
           "type": "math"
         }
       ],
-      "title": "SOC Deviation (46V>55V vs 0>100%)",
+      "title": "Average SOC Deviation (46V>55V vs 0>100%)",
       "transformations": [
         {
           "id": "renameByRegex",
@@ -1178,7 +1178,7 @@
         "type": "influxdb",
         "uid": "df8XmYRgz"
       },
-      "description": "Stage of charge as reported by the BMS (which uses estimate Ah capacity by measuring total input and output",
+      "description": "Stage of charge as reported by the BMS (which uses estimate Ah capacity by measuring total input and output)",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1436,7 +1436,7 @@
         "type": "influxdb",
         "uid": "df8XmYRgz"
       },
-      "description": "Stage of charge estimated from voltage",
+      "description": "Stage of charge estimated from last voltage reading",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2414,6 +2414,6 @@
   "timezone": "",
   "title": "BMS Statistics",
   "uid": "yst6paZgz",
-  "version": 37,
+  "version": 38,
   "weekStart": ""
 }
