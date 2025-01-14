@@ -1,0 +1,22 @@
+Install node-red on Windows 11
+
+1. Install Node.js
+	https://nodejs.org/en/download
+	Download and install node .msi
+
+2. Check node version in cmd window
+	node --version && npm --version
+	
+3. Install node-red
+	npm install -g --unsafe-perm node-red
+	
+4. Run node-red
+	node-red
+
+5. Open node-red page at http://localhost:1880/
+
+6. Using "Manage Palette" - Install node-red-node-serialport in node-red
+
+7. Import P16100A-Simulator.json
+
+8. Configure COM port in serial-port node
