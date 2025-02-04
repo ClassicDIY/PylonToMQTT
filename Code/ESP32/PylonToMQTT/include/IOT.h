@@ -15,34 +15,36 @@ extern "C"
 #include <IotWebConfESP32HTTPUpdateServer.h>
 #include "Defines.h"
 #include "Enumerations.h"
+#include "IOTServiceInterface.h"
 #include "IOTCallbackInterface.h"
 
 namespace PylonToMQTT
 {
+    class IOT : public IOTServiceInterface
+    {
+    public:
+        IOT(WebServer* pWebServer);
+        void Init(IOTCallbackInterface *iotCB);
+        boolean Run();
+        boolean Publish(const char *subtopic, const char *value, boolean retained = false);
+        boolean Publish(const char *subtopic, JsonDocument &payload, boolean retained = false);
+        boolean Publish(const char *subtopic, float value, boolean retained = false);
+        boolean PublishMessage(const char *topic, JsonDocument &payload, boolean retained);
+        boolean PublishHADiscovery(const char *bank, JsonDocument &payload);
+        std::string getRootTopicPrefix();
+        std::string getBankName();
+        u_int getUniqueId() { return _uniqueId; };
+        std::string getThingName();
+        void Online();
+        IOTCallbackInterface *IOTCB() { return _iotCB; }
+        unsigned long PublishRate();
 
-
-class IOT : public IOTCallbackInterface
-{
-public:
-    IOT();
-    void Init();
-    boolean Run();
-    void Publish(const char *subtopic, const char *value, boolean retained = false);
-    void Publish(const char *topic, float value, boolean retained = false);
-    void PublishMessage(const char* topic, JsonDocument& payload);
-    std::string getRootTopicPrefix();
-    u_int getUniqueId() { return _uniqueId;};
-    std::string getThingName();
-    unsigned long PublishRate();
-    void SetPublishRate(unsigned long rate);
-private:
-
-
-    bool _clientsConfigured = false;
-    unsigned long _currentPublishRate;
-    u_int _uniqueId = 0; // unique id from mac address NIC segment
-};
-
+    private:
+        bool _clientsConfigured = false;
+        IOTCallbackInterface *_iotCB;
+        u_int _uniqueId = 0; // unique id from mac address NIC segment
+        bool _publishedOnline = false;
+    };
 
 } // namespace PylonToMQTT
 

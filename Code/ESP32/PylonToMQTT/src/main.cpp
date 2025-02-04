@@ -1,15 +1,16 @@
 #include <Arduino.h>
+#include <WiFi.h>
+#include <WebServer.h>
+#include <time.h>
 #include "Log.h"
 #include "Enumerations.h"
 #include "IOT.h"
 #include "Pylon.h"
 
-#define WATCHDOG_TIMER 600000 //time in ms to trigger the watchdog
-#define COMMAND_PUBLISH_RATE 500 // delay between sequence of pylon commands sent to battery
-#define PUBLISH_RATE 10000
-
 using namespace PylonToMQTT;
 
+WebServer _webServer(80);
+IOT _iot = IOT(&_webServer);
 unsigned long _lastPublishTimeStamp = 0;
 
 PylonToMQTT::Pylon _Pylon = PylonToMQTT::Pylon();
@@ -40,24 +41,23 @@ void feed_watchdog()
 	}
 }
 
-
 void setup()
 {
 	Serial.begin(115200);
 	while (!Serial) {}
-	_iot.Init();
+	_iot.Init(&_Pylon);
 	init_watchdog();
-	_lastPublishTimeStamp = millis() + PUBLISH_RATE;
+	_lastPublishTimeStamp = millis() + COMMAND_PUBLISH_RATE;
 	// Set up object used to communicate with battery, provide callback to MQTT publish
 	_Pylon.begin(&_iot);
-	logd("Done setup");
+	logd("Setup Done");
 }
 
 void loop()
 {
 
 	if (_iot.Run()) {
-		_Pylon.Receive(PUBLISH_RATE); 
+		_Pylon.Receive(SERIAL_RECEIVE_TIMEOUT); 
 		if (_lastPublishTimeStamp < millis())
 		{
 			feed_watchdog();

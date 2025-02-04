@@ -1,12 +1,15 @@
 
 #pragma once
 
-#define CONFIG_VERSION "V1.2.2" // major.minor.build (major or minor will invalidate the configuration)
-#define HOME_ASSISTANT_PREFIX "homeassistant" // MQTT prefix used in autodiscovery
-#define STR_LEN 255                            // general string buffer size
-#define CONFIG_LEN 32                         // configuration string buffer size
+#define WATCHDOG_TIMER 600000 //time in ms to trigger the watchdog
+#define COMMAND_PUBLISH_RATE 500 // delay between sequence of pylon commands sent to battery
+#define SERIAL_RECEIVE_TIMEOUT 3000 // time in ms to wait for serial data from battery
+
+#define STR_LEN 255 // general string buffer size
+#define CONFIG_LEN 32 // configuration string buffer size
 #define NUMBER_CONFIG_LEN 6
-#define AP_TIMEOUT 30000
+#define DEFAULT_AP_PASSWORD "12345678"
+
 #define MAX_PUBLISH_RATE 30000
 #define MIN_PUBLISH_RATE 1000
 #define CheckBit(var,pos) ((var) & (1<<(pos))) ? true : false

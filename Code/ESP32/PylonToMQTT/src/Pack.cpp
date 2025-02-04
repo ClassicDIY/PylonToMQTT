@@ -5,79 +5,108 @@
 namespace PylonToMQTT
 {
 
-void Pack::PublishDiscovery()
-{
-    if (ReadyToPublish()) {
-        logd("Publishing discovery for %s", Name().c_str());
-        PublishDiscoverySub("sensor", "PackVoltage", "PackVoltage.Reading", "voltage", "V", "mdi:lightning-bolt");
-        PublishDiscoverySub("sensor", "PackCurrent", "PackCurrent.Reading", "current", "A", "mdi:current-dc");
-        PublishDiscoverySub("sensor", "SOC", "SOC", "battery", "%");
-        PublishDiscoverySub("sensor", "RemainingCapacity", "RemainingCapacity", "current", "Ah", "mdi:ev-station");
-        PublishTempsDiscovery();
-        PublishCellsDiscovery();
-        _discoveryPublished = true;
-    }
-}
+	void Pack::PublishDiscovery()
+	{
+		if (ReadyToPublish())
+		{
+			logd("Publishing discovery for %s", Name().c_str());
+			char buffer[STR_LEN];
+			JsonDocument doc;
+			JsonObject device = doc["device"].to<JsonObject>();
+			device["name"] = _name.c_str();
+			device["sw_version"] = CONFIG_VERSION;
+			device["manufacturer"] = "ClassicDIY";
+			sprintf(buffer, "ESP32-Bit (%X)", _psi->getUniqueId());
+			device["model"] = buffer;
 
-void Pack::PublishTempsDiscovery() {
-	char jsonElement[STR_LEN];
-	for (int i = 0; i < _numberOfTemps; i++) {
-        if (i < _pTempKeys->size()) {
-            sprintf(jsonElement, "Temps.%s.Reading", _pTempKeys->at(i).c_str());
-            PublishDiscoverySub("sensor",  _pTempKeys->at(i).c_str(), jsonElement, "temperature", "°C");
-        }
+			JsonObject origin = doc["origin"].to<JsonObject>();
+			origin["name"] = _psi->getBankName().c_str();
+
+			JsonArray identifiers = device["identifiers"].to<JsonArray>();
+			identifiers.add(_barCode.c_str());
+
+			JsonObject components = doc["components"].to<JsonObject>();
+			JsonObject PackVoltage = components["PackVoltage"].to<JsonObject>();
+			PackVoltage["platform"] = "sensor";
+			PackVoltage["name"] = "PackVoltage";
+			PackVoltage["device_class"] = "voltage";
+			PackVoltage["unit_of_measurement"] = "V";
+			PackVoltage["value_template"] = "{{ value_json.PackVoltage.Reading }}";
+			sprintf(buffer, "%s_PackVoltage", _name.c_str());
+			PackVoltage["unique_id"] = buffer;
+			PackVoltage["icon"] = "mdi:lightning-bolt";
+
+			JsonObject PackCurrent = components["PackCurrent"].to<JsonObject>();
+			PackCurrent["platform"] = "sensor";
+			PackCurrent["name"] = "PackCurrent";
+			PackCurrent["device_class"] = "current";
+			PackCurrent["unit_of_measurement"] = "A";
+			PackCurrent["value_template"] = "{{ value_json.PackCurrent.Reading }}";
+			sprintf(buffer, "%s_PackCurrent", _name.c_str());
+			PackCurrent["unique_id"] = buffer;
+			PackCurrent["icon"] = "mdi:current-dc";
+
+			JsonObject SOC = components["SOC"].to<JsonObject>();
+			SOC["platform"] = "sensor";
+			SOC["name"] = "SOC";
+			SOC["device_class"] = "battery";
+			SOC["unit_of_measurement"] = "%";
+			SOC["value_template"] = "{{ value_json.SOC }}";
+			sprintf(buffer, "%s_SOC", _name.c_str());
+			SOC["unique_id"] = buffer;
+
+			JsonObject RemainingCapacity = components["RemainingCapacity"].to<JsonObject>();
+			RemainingCapacity["platform"] = "sensor";
+			RemainingCapacity["name"] = "RemainingCapacity";
+			RemainingCapacity["unit_of_measurement"] = "Ah";
+			RemainingCapacity["value_template"] = "{{ value_json.RemainingCapacity }}";
+			sprintf(buffer, "%s_RemainingCapacity", _name.c_str());
+			RemainingCapacity["unique_id"] = buffer;
+			RemainingCapacity["icon"] = "mdi:ev-station";
+
+			char jsonElement[STR_LEN];
+			for (int i = 0; i < _numberOfTemps; i++)
+			{
+				if (i < _pTempKeys->size())
+				{
+					sprintf(jsonElement, "{{ value_json.Temps.%s.Reading }}", _pTempKeys->at(i).c_str());
+					JsonObject TMP = components[_pTempKeys->at(i).c_str()].to<JsonObject>();
+					TMP["platform"] = "sensor";
+					TMP["name"] = _pTempKeys->at(i).c_str();
+					TMP["device_class"] = "temperature";
+					TMP["unit_of_measurement"] = "°C";
+					TMP["value_template"] = jsonElement;
+					sprintf(buffer, "%s_%s", _name.c_str(), _pTempKeys->at(i).c_str());
+					TMP["unique_id"] = buffer;
+				}
+			}
+		
+			char entityName[STR_LEN];
+			for (int i = 0; i < _numberOfCells; i++)
+			{
+				sprintf(entityName, "Cell_%d", i + 1);
+				sprintf(jsonElement, "{{ value_json.Cells.Cell_%d.Reading }}", i + 1);
+				JsonObject CELL = components[entityName].to<JsonObject>();
+				CELL["platform"] = "sensor";
+				CELL["name"] = entityName;
+				CELL["device_class"] = "voltage";
+				CELL["unit_of_measurement"] = "V";
+				CELL["value_template"] = jsonElement;
+				sprintf(buffer, "%s_%s", _name.c_str(), entityName);
+				CELL["unique_id"] = buffer;
+				CELL["icon"] = "mdi:lightning-bolt";
+			}
+
+			sprintf(buffer, "%s/stat/readings/%s", _psi->getRootTopicPrefix().c_str(), _name.c_str());
+			doc["state_topic"] = buffer;
+			sprintf(buffer, "%s/tele/LWT", _psi->getRootTopicPrefix().c_str());
+			doc["availability_topic"] = buffer;
+			doc["pl_avail"] = "Online";
+			doc["pl_not_avail"] = "Offline";
+
+			_psi->PublishHADiscovery(_name.c_str(), doc);
+			_discoveryPublished = true;
+		}
 	}
-}
 
-void Pack::PublishCellsDiscovery() {
-	char entityName[STR_LEN];
-    char jsonElement[STR_LEN];
-	for (int i = 0; i < _numberOfCells; i++) {
-        sprintf(entityName, "Cell_%d", i+1);
-        sprintf(jsonElement, "Cells.Cell_%d.Reading", i+1);
-        PublishDiscoverySub("sensor",  entityName, jsonElement, "voltage", "V", "mdi:lightning-bolt");
-	}
-}
-
-// <discovery_prefix>/<component>/<object_id>/config -> homeassistant/sensor/1FC220_Pack2_SOC/config
-// object_id -> ESP<uniqueId>_<pack>_<entity>
-void Pack::PublishDiscoverySub(const char *component, const char *entity, const char *jsonElement, const char *device_class, const char *unit_of_meas, const char *icon)
-{
-	char buffer[STR_LEN];
-	StaticJsonDocument<1024> doc; // MQTT discovery
-	doc["device_class"] = device_class;
-	doc["unit_of_measurement"] = unit_of_meas;
-	doc["state_class"] = "measurement";
-
-	doc["name"] = entity;
-	if (strlen(icon) > 0) {
-		doc["icon"] = icon;
-	}
-
-	sprintf(buffer, "%s/stat/readings/%s", _pcb->getRootTopicPrefix().c_str(), Name().c_str());
-	doc["state_topic"] = buffer;
-
-	sprintf(buffer, "ESP%X_%s_%s", _pcb->getUniqueId(), Name().c_str(), entity);
-	doc["unique_id"] = buffer;
-	String object_id = buffer;
-
-	sprintf(buffer, "{{ value_json.%s }}", jsonElement);
-	doc["value_template"] = buffer;
-
-	sprintf(buffer, "%s/tele/LWT", _pcb->getRootTopicPrefix().c_str());
-	doc["availability_topic"] = buffer;
-    doc["pl_avail"] = "Online";
-    doc["pl_not_avail"] = "Offline";
-	JsonObject device = doc.createNestedObject("device");
-	device["name"] = Name();
-	device["via_device"] = _pcb->getThingName();
-	device["hw_version"] = _barCode.substr(0, 15);
-	device["sw_version"] = CONFIG_VERSION;
-	device["manufacturer"] = "ClassicDIY";
-	device["model"] = _versionInfo.substr(0, 19);
-	sprintf(buffer, "%s_%s", Name().c_str(), _barCode.substr(0, 15).c_str());
-	device["identifiers"] = buffer;
-	sprintf(buffer, "%s/%s/%s/config", HOME_ASSISTANT_PREFIX, component, object_id.c_str());
-	_pcb->PublishMessage(buffer, doc);
-}
 }

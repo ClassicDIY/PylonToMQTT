@@ -1,0 +1,22 @@
+[
+    {
+        "id": "25ec8cace1753c19",
+        "type": "function",
+        "z": "8d931bf7e831a10d",
+        "name": "function 1",
+        "func": "var input = {};\ninput = msg.payload;\nconst barcodes = [\n    \"314234373031303230313032333844\",\n    \"314234373031303230313032333845\",\n    \"314234373031303230313032333846\",\n];\n\n\nif (input[0] == '~') {\n    let index = context.get('index') || 0\n    index = (index + 1) % barcodes.length\n    context.set('index', index);\n    var addr = input[3] + input[4]\n    var cmd = input[5] + input[6] + input[7] + input[8]\n    var cell1 = getRandomInt(2800, 3600);\n    var hcell1 = decimalToHex(cell1, 4);\n    switch (cmd) {\n        case '4690':\n            msg.payload = `25${addr}4600E00203`;\n            break;\n        case '46C1':\n            msg.payload = `25${addr}4600602850313653313030412D31423437302D312E303400`;\n            break;\n        case '46C2':\n            msg.payload = `25${addr}4600B050${barcodes[index]}202020202044656420203720323032312C31373A35323A3338`;\n            break;\n        case '4642':\n            msg.payload = `25${addr}4600D07C00${addr}10${hcell1}0D260D240D210D210D220D230D240D220D210D220D220D230D220D230D21060B230B210B270B260B450B4E0050D23307CF0221C6000B271063`;\n            break;\n        case '4644':\n            msg.payload = `25${addr}4600E04E00${addr}10020202020101010000000000000000010602010101010100000000000000000000000000`;\n            break;\n    }\n    return msg;\n} \n\nfunction getRandomInt(min, max) {\n    min = Math.ceil(min);\n    max = Math.floor(max);\n    return Math.floor(Math.random() * (max - min + 1)) + min;\n}\n\nfunction decimalToHex(d, padding) {\n    var hex = Number(d).toString(16);\n    padding = typeof (padding) === \"undefined\" || padding === null ? padding = 2 : padding;\n\n    while (hex.length < padding) {\n        hex = \"0\" + hex;\n    }\n\n    return hex;\n}",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 360,
+        "y": 180,
+        "wires": [
+            [
+                "df727f6b2506240d"
+            ]
+        ]
+    }
+]
