@@ -32,7 +32,7 @@ namespace PylonToMQTT
 			PackVoltage["device_class"] = "voltage";
 			PackVoltage["unit_of_measurement"] = "V";
 			PackVoltage["value_template"] = "{{ value_json.PackVoltage.Reading }}";
-			sprintf(buffer, "%s_PackVoltage", _name.c_str());
+			sprintf(buffer, "%s_PackVoltage", _barCode.c_str());
 			PackVoltage["unique_id"] = buffer;
 			PackVoltage["icon"] = "mdi:lightning-bolt";
 
@@ -42,7 +42,7 @@ namespace PylonToMQTT
 			PackCurrent["device_class"] = "current";
 			PackCurrent["unit_of_measurement"] = "A";
 			PackCurrent["value_template"] = "{{ value_json.PackCurrent.Reading }}";
-			sprintf(buffer, "%s_PackCurrent", _name.c_str());
+			sprintf(buffer, "%s_PackCurrent", _barCode.c_str());
 			PackCurrent["unique_id"] = buffer;
 			PackCurrent["icon"] = "mdi:current-dc";
 
@@ -52,7 +52,7 @@ namespace PylonToMQTT
 			SOC["device_class"] = "battery";
 			SOC["unit_of_measurement"] = "%";
 			SOC["value_template"] = "{{ value_json.SOC }}";
-			sprintf(buffer, "%s_SOC", _name.c_str());
+			sprintf(buffer, "%s_SOC", _barCode.c_str());
 			SOC["unique_id"] = buffer;
 
 			JsonObject RemainingCapacity = components["RemainingCapacity"].to<JsonObject>();
@@ -60,7 +60,7 @@ namespace PylonToMQTT
 			RemainingCapacity["name"] = "RemainingCapacity";
 			RemainingCapacity["unit_of_measurement"] = "Ah";
 			RemainingCapacity["value_template"] = "{{ value_json.RemainingCapacity }}";
-			sprintf(buffer, "%s_RemainingCapacity", _name.c_str());
+			sprintf(buffer, "%s_RemainingCapacity", _barCode.c_str());
 			RemainingCapacity["unique_id"] = buffer;
 			RemainingCapacity["icon"] = "mdi:ev-station";
 
@@ -76,7 +76,7 @@ namespace PylonToMQTT
 					TMP["device_class"] = "temperature";
 					TMP["unit_of_measurement"] = "°C";
 					TMP["value_template"] = jsonElement;
-					sprintf(buffer, "%s_%s", _name.c_str(), _pTempKeys->at(i).c_str());
+					sprintf(buffer, "%s_%s", _barCode.c_str(), _pTempKeys->at(i).c_str());
 					TMP["unique_id"] = buffer;
 				}
 			}
@@ -92,7 +92,7 @@ namespace PylonToMQTT
 				CELL["device_class"] = "voltage";
 				CELL["unit_of_measurement"] = "V";
 				CELL["value_template"] = jsonElement;
-				sprintf(buffer, "%s_%s", _name.c_str(), entityName);
+				sprintf(buffer, "%s_%s", _barCode.c_str(), entityName);
 				CELL["unique_id"] = buffer;
 				CELL["icon"] = "mdi:lightning-bolt";
 			}
@@ -103,8 +103,8 @@ namespace PylonToMQTT
 			doc["availability_topic"] = buffer;
 			doc["pl_avail"] = "Online";
 			doc["pl_not_avail"] = "Offline";
-
-			_psi->PublishHADiscovery(_name.c_str(), doc);
+			sprintf(buffer, "%s_%s", _name.c_str(), _barCode.c_str());
+			_psi->PublishHADiscovery(buffer, doc);
 			_discoveryPublished = true;
 		}
 	}
