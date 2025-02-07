@@ -16,6 +16,13 @@ class Pack {
     std::string Name() {
       return _name;
     }
+    std::string getBarcode() {
+      if (_barCode.length() == 0) {
+        return _name;
+      }
+      return _barCode;
+    }
+
     void setBarcode(const std::string& bc) {
       _barCode = bc;
     }
