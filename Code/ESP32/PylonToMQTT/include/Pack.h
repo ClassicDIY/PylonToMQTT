@@ -17,9 +17,6 @@ class Pack {
       return _name;
     }
     std::string getBarcode() {
-      if (_barCode.length() == 0) {
-        return _name;
-      }
       return _barCode;
     }
 
@@ -49,11 +46,8 @@ class Pack {
     }
 
 protected:
-    // <discovery_prefix>/<component>/<object_id>/config -> homeassistant/sensor/1FC220_Pack2_SOC/config
-    // object_id -> ESP<uniqueId>_<pack>_<entity>
-
     bool ReadyToPublish() {
-        return (!_discoveryPublished && InfoPublished());
+        return (!_discoveryPublished && InfoPublished() && _numberOfTemps > 0 && _numberOfCells > 0);
     }
 
 

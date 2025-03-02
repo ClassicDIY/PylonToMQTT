@@ -1,6 +1,8 @@
 
 #pragma once
 
+#define TAG "PylonToMQTT"
+
 #define WATCHDOG_TIMER 600000 //time in ms to trigger the watchdog
 #define COMMAND_PUBLISH_RATE 500 // delay between sequence of pylon commands sent to battery
 #define SERIAL_RECEIVE_TIMEOUT 3000 // time in ms to wait for serial data from battery
@@ -16,3 +18,8 @@
 #define toShort(i, v) (v[i++]<<8) | v[i++]
 
 #define TempKeys std::string _tempKeys[] = { "CellTemp1_4", "CellTemp5_8", "CellTemp9_12", "CellTemp13_16", "MOS_T", "ENV_T"};
+
+#define ASYNC_WEBSERVER_PORT 7667
+#define IOTCONFIG_PORT 80
+#define WSOCKET_LOG_PORT 7668
+#define WSOCKET_HOME_PORT 7669

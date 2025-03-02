@@ -1,8 +1,6 @@
 #pragma once
 #include <Arduino.h>
 #include <ArduinoJson.h>
-#include "Log.h"
-#include "Enumerations.h"
 #include "IOTServiceInterface.h"
 #include "AsyncSerial.h"
 #include "Pack.h"
@@ -22,6 +20,7 @@ namespace PylonToMQTT
             _psi = pcb;
             _asyncSerial->begin(this, BAUDRATE, SERIAL_8N1, RXPIN, TXPIN);
         };
+        void Process();
         void Receive(int timeOut) { _asyncSerial->Receive(timeOut); };
         bool Transmit();
         int ParseResponse(char *szResponse, size_t readNow, CommandInformation cmd);
@@ -31,6 +30,8 @@ namespace PylonToMQTT
         iotwebconf::ParameterGroup *parameterGroup();
         bool validate(iotwebconf::WebRequestWrapper *webRequestWrapper);
         void onMqttConnect(bool sessionPresent);
+		void onMqttMessage(char* topic, JsonDocument& doc);
+		void onWiFiConnect();
 
         // AsyncSerialCallbackInterface
         void complete()
@@ -68,3 +69,5 @@ namespace PylonToMQTT
         std::vector<string> _TempKeys;
     };
 } // namespace PylonToMQTT
+
+

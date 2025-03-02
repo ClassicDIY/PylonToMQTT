@@ -1,0 +1,291 @@
+[ 33846][I][WebLog.cpp:51] operator()(): [0] Web Log Connected!
+
+[ 35669][D][IOT.cpp:84] operator()(): Connecting to MQTT...
+[ 35695][I][IOT.cpp:131] operator()(): Connected to MQTT. Session present: 0
+[ 35698][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25FF4690E002FFFCD7
+
+[ 35701][D][Pylon.cpp:55] onMqttConnect(): onMqttConnect
+[ 35752][D][Pylon.cpp:260] ParseResponse(): received: 19
+[ 35755][D][Pylon.cpp:261] ParseResponse(): data: ~25014600E00205FD32
+[ 35758][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 02 (2), CHKSUM: FD32
+[ 35765][I][Pylon.cpp:478] ParseResponse(): GetPackCount: 5
+[ 36209][D][Pylon.cpp:218] send_cmd(): send_cmd: ~250146C1E00201FD22
+
+[ 36305][D][Pylon.cpp:260] ParseResponse(): received: 57
+[ 36308][D][Pylon.cpp:261] ParseResponse(): data: ~25014600602850313653313030412D31423437302D312E303400F586
+[ 36311][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 28 (40), CHKSUM: F586
+[ 36714][D][Pylon.cpp:218] send_cmd(): send_cmd: ~250146C2E00201FD21
+
+[ 36857][D][Pylon.cpp:260] ParseResponse(): received: 97
+[ 36862][D][Pylon.cpp:261] ParseResponse(): data: ~25014600B05031423437303130323137303939394420202020204D617220333020323032322C31383A31383A3136ED77
+[ 36869][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 50 (80), CHKSUM: ED77
+[ 36879][I][Pylon.cpp:464] ParseResponse(): GetBarCode for 1 bc: 1B470102170999D Mar 30 2022,18:18:16
+[ 37727][D][Pylon.cpp:218] send_cmd(): send_cmd: ~250246C1E00202FD20
+
+[ 37825][D][Pylon.cpp:260] ParseResponse(): received: 57
+[ 37828][D][Pylon.cpp:261] ParseResponse(): data: ~25014600602850313653313030412D31423437302D312E303400F586
+[ 37831][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 28 (40), CHKSUM: F586
+[ 38234][D][Pylon.cpp:218] send_cmd(): send_cmd: ~250246C2E00202FD1F
+
+[ 38377][D][Pylon.cpp:260] ParseResponse(): received: 97
+[ 38383][D][Pylon.cpp:261] ParseResponse(): data: ~25014600B05031423437303130323137303939394420202020204D617220333020323032322C31383A31383A3136ED77
+[ 38391][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 50 (80), CHKSUM: ED77
+[ 38401][I][Pylon.cpp:464] ParseResponse(): GetBarCode for 1 bc: 1B470102170999D Mar 30 2022,18:18:16
+[ 39247][D][Pylon.cpp:218] send_cmd(): send_cmd: ~250346C1E00203FD1E
+
+[ 39344][D][Pylon.cpp:260] ParseResponse(): received: 57
+[ 39349][D][Pylon.cpp:261] ParseResponse(): data: ~25014600602850313653313030412D31423437302D312E303400F586
+[ 39354][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 28 (40), CHKSUM: F586
+[ 39754][D][Pylon.cpp:218] send_cmd(): send_cmd: ~250346C2E00203FD1D
+
+[ 39897][D][Pylon.cpp:260] ParseResponse(): received: 97
+[ 39903][D][Pylon.cpp:261] ParseResponse(): data: ~25014600B05031423437303130323137303939394420202020204D617220333020323032322C31383A31383A3136ED77
+[ 39910][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 50 (80), CHKSUM: ED77
+[ 39919][I][Pylon.cpp:464] ParseResponse(): GetBarCode for 1 bc: 1B470102170999D Mar 30 2022,18:18:16
+[ 40767][D][Pylon.cpp:218] send_cmd(): send_cmd: ~250446C1E00204FD1C
+
+[ 40864][D][Pylon.cpp:260] ParseResponse(): received: 57
+[ 40868][D][Pylon.cpp:261] ParseResponse(): data: ~25014600602850313653313030412D31423437302D312E303400F586
+[ 40871][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 28 (40), CHKSUM: F586
+[ 41274][D][Pylon.cpp:218] send_cmd(): send_cmd: ~250446C2E00204FD1B
+
+[ 41417][D][Pylon.cpp:260] ParseResponse(): received: 97
+[ 41421][D][Pylon.cpp:261] ParseResponse(): data: ~25014600B05031423437303130323137303939394420202020204D617220333020323032322C31383A31383A3136ED77
+[ 41428][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 50 (80), CHKSUM: ED77
+[ 41438][I][Pylon.cpp:464] ParseResponse(): GetBarCode for 1 bc: 1B470102170999D Mar 30 2022,18:18:16
+[ 42288][D][Pylon.cpp:218] send_cmd(): send_cmd: ~250546C1E00205FD1A
+
+[ 42385][D][Pylon.cpp:260] ParseResponse(): received: 57
+[ 42389][D][Pylon.cpp:261] ParseResponse(): data: ~25014600602850313653313030412D31423437302D312E303400F586
+[ 42392][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 28 (40), CHKSUM: F586
+[ 42795][D][Pylon.cpp:218] send_cmd(): send_cmd: ~250546C2E00205FD19
+
+[ 42938][D][Pylon.cpp:260] ParseResponse(): received: 97
+[ 42941][D][Pylon.cpp:261] ParseResponse(): data: ~25014600B05031423437303130323137303939394420202020204D617220333020323032322C31383A31383A3136ED77
+[ 42948][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 50 (80), CHKSUM: ED77
+[ 42958][I][Pylon.cpp:464] ParseResponse(): GetBarCode for 1 bc: 1B470102170999D Mar 30 2022,18:18:16
+[ 48308][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25014642E00201FD30
+
+[ 48502][D][Pylon.cpp:260] ParseResponse(): received: 141
+[ 48507][D][Pylon.cpp:261] ParseResponse(): data: ~25014600D07C0001100D8B0D280D2A0D290D2C0D260D290D2B0D2B0D5A0D280D2E0D320D290D280D2C060B7C0B7B0B7B0B7D0B8C0B940000D38728DA0228E60063271063E26D
+[ 48518][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 7C (124), CHKSUM: E26D
+[ 48527][I][Pylon.cpp:307] ParseResponse(): AnalogValueFixedPoint: INFO: 0001, Pack: 1
+[ 48536][D][Pylon.cpp:331] ParseResponse(): AnalogValueFixedPoint: packIndex: 0, Pack size: 5
+[ 48815][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25014644E00201FD2E
+
+[ 48956][D][Pylon.cpp:260] ParseResponse(): received: 95
+[ 48960][D][Pylon.cpp:261] ParseResponse(): data: ~25014600E04E000110000000000000000000000000000000000600000000000000000000000600000000000031EECE
+[ 48967][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 4E (78), CHKSUM: EECE
+[ 48977][I][Pylon.cpp:374] ParseResponse(): GetAlarm: Pack: 1
+[ 49322][D][Pack.cpp:12] PublishDiscovery(): Publishing discovery for Pack1
+[ 49850][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25024642E00202FD2E
+
+[ 50043][D][Pylon.cpp:260] ParseResponse(): received: 141
+[ 50048][D][Pylon.cpp:261] ParseResponse(): data: ~25014600D07C0002100D310D340D320D340D330D320D2F0D320D320D320D300D320D2D0D320D320D30060B590B630B5C0B650B770B870000D31877CD0977FA001F6D6064E2EC
+[ 50059][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 7C (124), CHKSUM: E2EC
+[ 50068][I][Pylon.cpp:307] ParseResponse(): AnalogValueFixedPoint: INFO: 0002, Pack: 2
+[ 50077][D][Pylon.cpp:331] ParseResponse(): AnalogValueFixedPoint: packIndex: 1, Pack size: 5
+[ 50356][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25024644E00202FD2C
+
+[ 50499][D][Pylon.cpp:260] ParseResponse(): received: 95
+[ 50502][D][Pylon.cpp:261] ParseResponse(): data: ~25014600E04E000210000000000000000000000000000000000600000000000000000000000600000000000000EED1
+[ 50509][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 4E (78), CHKSUM: EED1
+[ 50518][I][Pylon.cpp:374] ParseResponse(): GetAlarm: Pack: 2
+[ 50863][D][Pack.cpp:12] PublishDiscovery(): Publishing discovery for Pack2
+[ 51393][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25034642E00203FD2C
+
+[ 51591][D][Pylon.cpp:260] ParseResponse(): received: 141
+[ 51596][D][Pylon.cpp:261] ParseResponse(): data: ~25014600D07C0003100D2E0D380D360D330D350D3E0D3E0D360D370D330D220D2B0D460D320D2B0D31060B760B740B770B760B890B8D0000D34127C00227D60076271063E2EC
+[ 51607][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 7C (124), CHKSUM: E2EC
+[ 51616][I][Pylon.cpp:307] ParseResponse(): AnalogValueFixedPoint: INFO: 0003, Pack: 3
+[ 51625][D][Pylon.cpp:331] ParseResponse(): AnalogValueFixedPoint: packIndex: 2, Pack size: 5
+[ 51899][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25034644E00203FD2A
+
+[ 52042][D][Pylon.cpp:260] ParseResponse(): received: 95
+[ 52047][D][Pylon.cpp:261] ParseResponse(): data: ~25014600E04E000310000000000000000000000000000000000600000000000000000000000600000000000000EED0
+[ 52054][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 4E (78), CHKSUM: EED0
+[ 52063][I][Pylon.cpp:374] ParseResponse(): GetAlarm: Pack: 3
+[ 52405][D][Pack.cpp:12] PublishDiscovery(): Publishing discovery for Pack3
+[ 52934][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25044642E00204FD2A
+
+[ 53128][D][Pylon.cpp:260] ParseResponse(): received: 141
+[ 53135][D][Pylon.cpp:261] ParseResponse(): data: ~25014600D07C0004100D2B0D360D400D350D3E0D3E0D360D310D280D3B0D270D2D0D330D330D470D36060B6F0B6C0B6C0B6C0B770B780000D35327CB0227E5007B271063E2A3
+[ 53146][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 7C (124), CHKSUM: E2A3
+[ 53156][I][Pylon.cpp:307] ParseResponse(): AnalogValueFixedPoint: INFO: 0004, Pack: 4
+[ 53165][D][Pylon.cpp:331] ParseResponse(): AnalogValueFixedPoint: packIndex: 3, Pack size: 5
+[ 53441][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25044644E00204FD28
+
+[ 53582][D][Pylon.cpp:260] ParseResponse(): received: 95
+[ 53587][D][Pylon.cpp:261] ParseResponse(): data: ~25014600E04E000410000000000000000000000000000000000600000000000000000000000600000000000000EECF
+[ 53594][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 4E (78), CHKSUM: EECF
+[ 53604][I][Pylon.cpp:374] ParseResponse(): GetAlarm: Pack: 4
+[ 53947][D][Pack.cpp:12] PublishDiscovery(): Publishing discovery for Pack4
+[ 54475][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25054642E00205FD28
+
+[ 54669][D][Pylon.cpp:260] ParseResponse(): received: 141
+[ 54674][D][Pylon.cpp:261] ParseResponse(): data: ~25014600D07C0005100D2C0D2F0D2A0D3D0D3A0D3C0D2F0D310D320D290D2A0D2E0D410D3D0D390D2E060B5D0B5A0B5C0B600B710B710000D330282602283E007B271063E299
+[ 54685][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 7C (124), CHKSUM: E299
+[ 54695][I][Pylon.cpp:307] ParseResponse(): AnalogValueFixedPoint: INFO: 0005, Pack: 5
+[ 54703][D][Pylon.cpp:331] ParseResponse(): AnalogValueFixedPoint: packIndex: 4, Pack size: 5
+[ 54982][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25054644E00205FD26
+
+[ 55123][D][Pylon.cpp:260] ParseResponse(): received: 95
+[ 55128][D][Pylon.cpp:261] ParseResponse(): data: ~25014600E04E000510000000000000000000000000000000000600000000000000000000000600000000000000EECE
+[ 55135][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 4E (78), CHKSUM: EECE
+[ 55144][I][Pylon.cpp:374] ParseResponse(): GetAlarm: Pack: 5
+[ 55489][D][Pack.cpp:12] PublishDiscovery(): Publishing discovery for Pack5
+
+[292599][D][Pylon.cpp:260] ParseResponse(): received: 141
+[292604][D][Pylon.cpp:261] ParseResponse(): data: ~25014600D07C0005100D2E0D2E0D2A0D380D340D370D2C0D300D320D290D2A0D2F0D3A0D380D340D2C060B5D0B5C0B5D0B630B690B6A0000D30B282C02283E007B271063E28C
+[292615][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 7C (124), CHKSUM: E28C
+[292625][I][Pylon.cpp:307] ParseResponse(): AnalogValueFixedPoint: INFO: 0005, Pack: 5
+[292634][D][Pylon.cpp:331] ParseResponse(): AnalogValueFixedPoint: packIndex: 0, Pack size: 5
+[292911][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25054644E00205FD26
+
+[293051][D][Pylon.cpp:260] ParseResponse(): received: 95
+[293054][D][Pylon.cpp:261] ParseResponse(): data: ~25014600E04E000510000000000000000000000000000000000600000000000000000000000600000000000000EECE
+[293061][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 4E (78), CHKSUM: EECE
+[293070][I][Pylon.cpp:374] ParseResponse(): GetAlarm: Pack: 5
+[298424][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25014642E00201FD30
+
+[298623][D][Pylon.cpp:260] ParseResponse(): received: 141
+[298628][D][Pylon.cpp:261] ParseResponse(): data: ~25014600D07C0001100D440D2F0D2F0D2F0D310D310D300D2F0D300D380D300D2E0D300D2F0D2F0D2D060B820B820B800B830B8B0B930000D36428830228E60063271063E2E2
+[298639][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 7C (124), CHKSUM: E2E2
+[298648][I][Pylon.cpp:307] ParseResponse(): AnalogValueFixedPoint: INFO: 0001, Pack: 1
+[298657][D][Pylon.cpp:331] ParseResponse(): AnalogValueFixedPoint: packIndex: 0, Pack size: 5
+[298930][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25014644E00201FD2E
+
+[299074][D][Pylon.cpp:260] ParseResponse(): received: 95
+[299079][D][Pylon.cpp:261] ParseResponse(): data: ~25014600E04E000110000000000000000000000000000000000600000000000000000000000600000000000031EECE
+[299085][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 4E (78), CHKSUM: EECE
+[299095][I][Pylon.cpp:374] ParseResponse(): GetAlarm: Pack: 1
+[299945][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25024642E00202FD2E
+
+[300144][D][Pylon.cpp:260] ParseResponse(): received: 141
+[300149][D][Pylon.cpp:261] ParseResponse(): data: ~25014600D07C0002100D2F0D320D300D320D300D300D2D0D300D310D310D2D0D310D2B0D2F0D310D2E060B5B0B680B5F0B690B780B860000D2F977D50977FA001F6D6064E297
+[300159][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 7C (124), CHKSUM: E297
+[300169][I][Pylon.cpp:307] ParseResponse(): AnalogValueFixedPoint: INFO: 0002, Pack: 2
+[300178][D][Pylon.cpp:331] ParseResponse(): AnalogValueFixedPoint: packIndex: 0, Pack size: 5
+[300451][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25024644E00202FD2C
+
+[300595][D][Pylon.cpp:260] ParseResponse(): received: 95
+[300600][D][Pylon.cpp:261] ParseResponse(): data: ~25014600E04E000210000000000000000000000000000000000600000000000000000000000600000000000000EED1
+[300607][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 4E (78), CHKSUM: EED1
+[300616][I][Pylon.cpp:374] ParseResponse(): GetAlarm: Pack: 2
+[301465][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25034642E00203FD2C
+
+[301658][D][Pylon.cpp:260] ParseResponse(): received: 141
+[301662][D][Pylon.cpp:261] ParseResponse(): data: ~25014600D07C0003100D2D0D340D350D300D330D390D380D340D330D300D270D2C0D3F0D300D2D0D30060B7C0B7A0B7B0B7D0B880B8B0000D32027140227D60075271062E2E8
+[301673][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 7C (124), CHKSUM: E2E8
+[301683][I][Pylon.cpp:307] ParseResponse(): AnalogValueFixedPoint: INFO: 0003, Pack: 3
+[301691][D][Pylon.cpp:331] ParseResponse(): AnalogValueFixedPoint: packIndex: 0, Pack size: 5
+[301970][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25034644E00203FD2A
+
+[302116][D][Pylon.cpp:260] ParseResponse(): received: 95
+[302119][D][Pylon.cpp:261] ParseResponse(): data: ~25014600E04E000310000000000000000000000000000000000600000000000000000000000600000000000000EED0
+[302126][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 4E (78), CHKSUM: EED0
+[302136][I][Pylon.cpp:374] ParseResponse(): GetAlarm: Pack: 3
+[302984][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25044642E00204FD2A
+
+[303183][D][Pylon.cpp:260] ParseResponse(): received: 141
+[303188][D][Pylon.cpp:261] ParseResponse(): data: ~25014600D07C0004100D280D310D3C0D350D3C0D3B0D360D310D260D370D240D2A0D2F0D320D460D33060B730B720B6F0B720B740B750000D32D27D10227E5007B271063E2E2
+[303199][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 7C (124), CHKSUM: E2E2
+[303208][I][Pylon.cpp:307] ParseResponse(): AnalogValueFixedPoint: INFO: 0004, Pack: 4
+[303217][D][Pylon.cpp:331] ParseResponse(): AnalogValueFixedPoint: packIndex: 0, Pack size: 5
+[303491][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25044644E00204FD28
+
+[303631][D][Pylon.cpp:260] ParseResponse(): received: 95
+[303636][D][Pylon.cpp:261] ParseResponse(): data: ~25014600E04E000410000000000000000000000000000000000600000000000000000000000600000000000000EECF
+[303643][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 4E (78), CHKSUM: EECF
+[303652][I][Pylon.cpp:374] ParseResponse(): GetAlarm: Pack: 4
+[304504][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25054642E00205FD28
+
+[304697][D][Pylon.cpp:260] ParseResponse(): received: 141
+[304701][D][Pylon.cpp:261] ParseResponse(): data: ~25014600D07C0005100D2E0D2E0D2B0D380D340D370D2D0D300D320D290D2A0D300D3A0D380D340D2C060B5D0B5C0B5D0B630B690B6A0000D30E282C02283E007B271063E29C
+[304712][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 7C (124), CHKSUM: E29C
+[304722][I][Pylon.cpp:307] ParseResponse(): AnalogValueFixedPoint: INFO: 0005, Pack: 5
+[304730][D][Pylon.cpp:331] ParseResponse(): AnalogValueFixedPoint: packIndex: 0, Pack size: 5
+[305009][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25054644E00205FD26
+
+[305151][D][Pylon.cpp:260] ParseResponse(): received: 95
+[305155][D][Pylon.cpp:261] ParseResponse(): data: ~25014600E04E000510000000000000000000000000000000000600000000000000000000000600000000000000EECE
+[305161][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 4E (78), CHKSUM: EECE
+[305171][I][Pylon.cpp:374] ParseResponse(): GetAlarm: Pack: 5
+[310522][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25014642E00201FD30
+
+[310716][D][Pylon.cpp:260] ParseResponse(): received: 141
+[310721][D][Pylon.cpp:261] ParseResponse(): data: ~25014600D07C0001100D440D2F0D2F0D2F0D310D310D300D2F0D300D380D300D2E0D300D2F0D2F0D2D060B820B820B800B830B8B0B930000D36428830228E60063271063E2E2
+[310732][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 7C (124), CHKSUM: E2E2
+[310741][I][Pylon.cpp:307] ParseResponse(): AnalogValueFixedPoint: INFO: 0001, Pack: 1
+[310750][D][Pylon.cpp:331] ParseResponse(): AnalogValueFixedPoint: packIndex: 0, Pack size: 5
+[311028][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25014644E00201FD2E
+
+[311168][D][Pylon.cpp:260] ParseResponse(): received: 95
+[311172][D][Pylon.cpp:261] ParseResponse(): data: ~25014600E04E000110000000000000000000000000000000000600000000000000000000000600000000000031EECE
+[311179][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 4E (78), CHKSUM: EECE
+[311189][I][Pylon.cpp:374] ParseResponse(): GetAlarm: Pack: 1
+[312041][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25024642E00202FD2E
+
+[312237][D][Pylon.cpp:260] ParseResponse(): received: 141
+[312242][D][Pylon.cpp:261] ParseResponse(): data: ~25014600D07C0002100D2F0D300D2F0D310D310D300D2D0D300D310D300D2D0D300D2B0D2F0D300D2D060B5B0B680B5F0B690B780B860000D2F277D50977FA001F6D6064E28F
+[312253][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 7C (124), CHKSUM: E28F
+[312262][I][Pylon.cpp:307] ParseResponse(): AnalogValueFixedPoint: INFO: 0002, Pack: 2
+[312271][D][Pylon.cpp:331] ParseResponse(): AnalogValueFixedPoint: packIndex: 0, Pack size: 5
+[312547][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25024644E00202FD2C
+
+[312688][D][Pylon.cpp:260] ParseResponse(): received: 95
+[312692][D][Pylon.cpp:261] ParseResponse(): data: ~25014600E04E000210000000000000000000000000000000000600000000000000000000000600000000000000EED1
+[312699][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 4E (78), CHKSUM: EED1
+[312708][I][Pylon.cpp:374] ParseResponse(): GetAlarm: Pack: 2
+[313561][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25034642E00203FD2C
+
+[313755][D][Pylon.cpp:260] ParseResponse(): received: 141
+[313759][D][Pylon.cpp:261] ParseResponse(): data: ~25014600D07C0003100D2D0D350D350D300D330D390D380D340D330D300D270D2B0D3F0D300D2D0D30060B7C0B7A0B7B0B7D0B880B8B0000D32027140227D60075271062E2E8
+[313770][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 7C (124), CHKSUM: E2E8
+[313780][I][Pylon.cpp:307] ParseResponse(): AnalogValueFixedPoint: INFO: 0003, Pack: 3
+[313789][D][Pylon.cpp:331] ParseResponse(): AnalogValueFixedPoint: packIndex: 0, Pack size: 5
+[314067][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25034644E00203FD2A
+
+[314216][D][Pylon.cpp:260] ParseResponse(): received: 95
+[314219][D][Pylon.cpp:261] ParseResponse(): data: ~25014600E04E000310000000000000000000000000000000000600000000000000000000000600000000000000EED0
+[314226][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 4E (78), CHKSUM: EED0
+[314236][I][Pylon.cpp:374] ParseResponse(): GetAlarm: Pack: 3
+[315081][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25044642E00204FD2A
+
+[315276][D][Pylon.cpp:260] ParseResponse(): received: 141
+[315281][D][Pylon.cpp:261] ParseResponse(): data: ~25014600D07C0004100D280D310D3C0D350D3C0D3B0D360D310D260D370D240D2A0D2F0D320D460D32060B730B720B6F0B720B740B750000D32C27D10227E5007B271063E2E4
+[315291][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 7C (124), CHKSUM: E2E4
+[315301][I][Pylon.cpp:307] ParseResponse(): AnalogValueFixedPoint: INFO: 0004, Pack: 4
+[315310][D][Pylon.cpp:331] ParseResponse(): AnalogValueFixedPoint: packIndex: 0, Pack size: 5
+[315588][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25044644E00204FD28
+
+[315728][D][Pylon.cpp:260] ParseResponse(): received: 95
+[315733][D][Pylon.cpp:261] ParseResponse(): data: ~25014600E04E000410000000000000000000000000000000000600000000000000000000000600000000000000EECF
+[315740][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 4E (78), CHKSUM: EECF
+[315749][I][Pylon.cpp:374] ParseResponse(): GetAlarm: Pack: 4
+[316601][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25054642E00205FD28
+
+[316802][D][Pylon.cpp:260] ParseResponse(): received: 141
+[316806][D][Pylon.cpp:261] ParseResponse(): data: ~25014600D07C0005100D2E0D2E0D2B0D380D340D370D2D0D300D320D290D2A0D2F0D3B0D380D340D2C060B5D0B5C0B5D0B630B690B6A0000D30E282C02283E007B271063E286
+[316817][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 7C (124), CHKSUM: E286
+[316826][I][Pylon.cpp:307] ParseResponse(): AnalogValueFixedPoint: INFO: 0005, Pack: 5
+[316835][D][Pylon.cpp:331] ParseResponse(): AnalogValueFixedPoint: packIndex: 0, Pack size: 5
+[317106][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25054644E00205FD26
+
+[317247][D][Pylon.cpp:260] ParseResponse(): received: 95
+[317252][D][Pylon.cpp:261] ParseResponse(): data: ~25014600E04E000510000000000000000000000000000000000600000000000000000000000600000000000000EECE
+[317259][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 4E (78), CHKSUM: EECE
+[317268][I][Pylon.cpp:374] ParseResponse(): GetAlarm: Pack: 5
+[322619][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25014642E00201FD30
+
+[322813][D][Pylon.cpp:260] ParseResponse(): received: 141
+[322817][D][Pylon.cpp:261] ParseResponse(): data: ~25014600D07C0001100D440D2F0D2F0D2F0D300D300D2F0D2E0D300D380D300D2E0D300D2F0D2F0D2D060B820B820B800B830B8B0B930000D36028830228E60063271063E2D4
+[322828][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 7C (124), CHKSUM: E2D4
+[322837][I][Pylon.cpp:307] ParseResponse(): AnalogValueFixedPoint: INFO: 0001, Pack: 1
+[322846][D][Pylon.cpp:331] ParseResponse(): AnalogValueFixedPoint: packIndex: 0, Pack size: 5
+[323125][D][Pylon.cpp:218] send_cmd(): send_cmd: ~25014644E00201FD2E
+
+[323266][D][Pylon.cpp:260] ParseResponse(): received: 95
+[323271][D][Pylon.cpp:261] ParseResponse(): data: ~25014600E04E000110000000000000000000000000000000000600000000000000000000000600000000000031EECE
+[323278][D][Pylon.cpp:295] ParseResponse(): VER: 25, ADR: 01, CID1: 46, CID2: 00, LENID: 4E (78), CHKSUM: EECE
+[323287][I][Pylon.cpp:374] ParseResponse(): GetAlarm: Pack: 1

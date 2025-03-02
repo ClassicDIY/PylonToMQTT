@@ -1,11 +1,23 @@
+#include <Arduino.h>
 #include <vector>
+#include "IotWebConfOptionalGroup.h"
+#include <IotWebConfTParameter.h>
 #include "Log.h"
+#include "WebLog.h"
 #include "HelperFunctions.h"
 #include "Defines.h"
 #include "Pylon.h"
+#include <WebSocketsServer.h>
+#include <ESPAsyncWebServer.h>
+#include <AsyncTCP.h>
+#include "html.h"
 
 namespace PylonToMQTT
 {
+	WebLog _webLog = WebLog();
+	AsyncWebServer asyncServer(ASYNC_WEBSERVER_PORT);
+	WebSocketsServer _webSocket = WebSocketsServer(WSOCKET_HOME_PORT);
+
 	CommandInformation _infoCommands[] = {CommandInformation::GetVersionInfo, CommandInformation::GetBarCode, CommandInformation::None};
 	CommandInformation _readingsCommands[] = {CommandInformation::AnalogValueFixedPoint, CommandInformation::AlarmInfo, CommandInformation::None};
 
@@ -41,6 +53,43 @@ namespace PylonToMQTT
 	void Pylon::onMqttConnect(bool sessionPresent)
 	{
 		logd("onMqttConnect");
+	}
+	void Pylon::onMqttMessage(char *topic, JsonDocument &doc)
+	{
+		logd("onMqttMessage %s", topic);
+	}
+
+	void Pylon::onWiFiConnect()
+	{
+		asyncServer.begin();
+		_webLog.begin(&asyncServer);
+		_webSocket.begin();
+		_webSocket.onEvent([](uint8_t num, WStype_t type, uint8_t *payload, size_t length)
+						   { 
+			if (type == WStype_DISCONNECTED)
+			{
+				logi("[%u] Home Page Disconnected!\n", num);
+			}
+			else if (type == WStype_CONNECTED)
+			{
+				logi("[%u] Home Page Connected!\n", num);
+			} });
+
+		asyncServer.on("/", HTTP_GET, [this](AsyncWebServerRequest *request) {
+			String page = home_html;
+			page.replace("{n}", _psi->getThingName().c_str());
+			page.replace("{v}", CONFIG_VERSION);
+			page.replace("{cp}", String(IOTCONFIG_PORT));
+
+			request->send(200, "text/html", page);
+		});
+	}
+
+	void Pylon::Process()
+	{
+		_webLog.process();
+		_webSocket.loop();
+		return;
 	}
 
 	bool Pylon::Transmit()
@@ -278,7 +327,8 @@ namespace PylonToMQTT
 						temp["State"] = 0;						   // default to ok
 					}
 				}
-				int packIndex = ADR - 1;
+				int packIndex = packNumber - 1;
+				logd("AnalogValueFixedPoint: packIndex: %d, Pack size: %d", packIndex, _Packs.size());
 				if (packIndex < _Packs.size())
 				{
 					_Packs[packIndex].setNumberOfCells(numberOfCells);
